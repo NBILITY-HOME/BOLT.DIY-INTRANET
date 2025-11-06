@@ -1,0 +1,137 @@
+BOLT.DIY NBILITY EDITION - PROPRIETARY LICENSE
+
+Copyright © 2025 Nbility. All rights reserved.
+
+═══════════════════════════════════════════════════════════════════════════
+TERMS AND CONDITIONS
+═══════════════════════════════════════════════════════════════════════════
+
+This software and associated documentation files (the "Software") are the 
+proprietary and confidential information of Nbility ("Proprietary Information").
+
+1. GRANT OF LICENSE
+
+   Subject to the terms and conditions of this License, Nbility grants you
+   a limited, non-exclusive, non-transferable, revocable license to use the
+   Software solely for personal or internal business purposes.
+
+2. RESTRICTIONS
+
+   You may NOT:
+   
+   a) Modify, adapt, translate, or create derivative works based on the 
+      Software without prior written consent from Nbility.
+   
+   b) Distribute, sublicense, lease, rent, loan, or otherwise transfer the 
+      Software to any third party.
+   
+   c) Remove or alter any proprietary notices, labels, or marks on the 
+      Software.
+   
+   d) Use the Software for any commercial purpose or for the benefit of any 
+      third party without prior written authorization from Nbility.
+   
+   e) Reverse engineer, decompile, disassemble, or otherwise attempt to 
+      derive the source code of the Software (except as expressly permitted 
+      by applicable law).
+   
+   f) Use the Software in any manner that could damage, disable, overburden, 
+      or impair Nbility's systems or interfere with any other party's use 
+      of the Software.
+
+3. OWNERSHIP
+
+   The Software is licensed, not sold. Nbility retains all right, title, and 
+   interest in and to the Software, including all intellectual property rights 
+   therein. This License does not grant you any rights to trademarks, service 
+   marks, or trade names of Nbility.
+
+4. CONFIDENTIALITY
+
+   You acknowledge that the Software contains proprietary and confidential 
+   information of Nbility. You agree to maintain the confidentiality of the 
+   Software and not disclose it to any third party without the prior written 
+   consent of Nbility.
+
+5. NO WARRANTY
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+   FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL 
+   NBILITY BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN 
+   AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN 
+   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+6. LIMITATION OF LIABILITY
+
+   TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL 
+   NBILITY BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT, OR CONSEQUENTIAL 
+   DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF 
+   BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION, 
+   OR ANY OTHER PECUNIARY LOSS) ARISING OUT OF THE USE OF OR INABILITY TO 
+   USE THE SOFTWARE, EVEN IF NBILITY HAS BEEN ADVISED OF THE POSSIBILITY 
+   OF SUCH DAMAGES.
+
+7. TERMINATION
+
+   This License is effective until terminated. Your rights under this License 
+   will terminate automatically without notice from Nbility if you fail to 
+   comply with any term(s) of this License. Upon termination, you must cease 
+   all use of the Software and destroy all copies of the Software in your 
+   possession or control.
+
+8. GOVERNING LAW
+
+   This License shall be governed by and construed in accordance with the 
+   laws of France, without regard to its conflict of law provisions.
+
+9. ENTIRE AGREEMENT
+
+   This License constitutes the entire agreement between you and Nbility 
+   concerning the Software and supersedes all prior or contemporaneous 
+   agreements, whether oral or written.
+
+10. SEVERABILITY
+
+    If any provision of this License is held to be unenforceable, such 
+    provision shall be reformed only to the extent necessary to make it 
+    enforceable, and the remaining provisions shall remain in full force 
+    and effect.
+
+═══════════════════════════════════════════════════════════════════════════
+CONTACT INFORMATION
+═══════════════════════════════════════════════════════════════════════════
+
+For licensing inquiries, permission requests, or other questions:
+
+Nbility
+Email: contact@nbility.fr
+Website: https://nbility.fr
+
+═══════════════════════════════════════════════════════════════════════════
+THIRD-PARTY COMPONENTS
+═══════════════════════════════════════════════════════════════════════════
+
+This Software includes or depends on the following third-party components,
+which are subject to their respective licenses:
+
+- Bolt.DIY (https://github.com/stackblitz-labs/bolt.diy)
+  Licensed under MIT License
+  Copyright (c) StackBlitz Labs
+
+- Docker (https://www.docker.com/)
+  Licensed under Apache License 2.0
+
+- Nginx (https://nginx.org/)
+  Licensed under 2-clause BSD License
+
+- PHP (https://www.php.net/)
+  Licensed under PHP License v3.01
+
+The use of these third-party components is governed by their respective 
+licenses and does not grant any additional rights under this License.
+
+═══════════════════════════════════════════════════════════════════════════
+
+Last Updated: November 6, 2025
+Version: 3.0
