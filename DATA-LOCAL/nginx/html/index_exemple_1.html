@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolt.DIY Nbility - Accueil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- STYLES GLOBAUX & VARIABLES --- */
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --primary:#6366f1; /* Indigo */
+            --secondary:#8b5cf6; /* Violet */
+            --accent:#06b6d4; /* Cyan */
+            --dark:#0f172a;
+            --surface:#1e293b;
+            --elevated:#334155;
+            --text:#f1f5f9;
+            --text-sec:#cbd5e1;
+            --success:#10b981;
+            --glow:rgba(99,102,241,.5);
+        }
+        
+        /* --- KEYFRAMES (Animations) --- */
+        
+        /* 1. Animation de fond bleu foncé qui bouge lentement */
+        @keyframes gradient-shift {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+
+        /* 2. Animation d'éclat général */
+        @keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:.8}}
+
+        /* 3. Animation d'apparition des éléments */
+        @keyframes fadeIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+        /* 4. NOUVEAU: Animation de rotation pour l'effet holographique */
+        @keyframes rotate-hologram {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* --- STYLE DU BODY (Fond Animé) --- */
+
+        body{
+            font-family:Inter,sans-serif;
+            background-color: #0c121e;
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:20px;
+            position:relative;
+            overflow:hidden;
+            
+            /* Fond Bleu Foncé Animé (Dégradé qui se déplace) */
+            background-image: 
+                linear-gradient(135deg, #0c121e 0%, #1a233a 25%, #2c0e40 50%, #1a233a 75%, #0c121e 100%);
+            
+            background-size: 400% 400%;
+            animation: gradient-shift 30s ease infinite;
+            transition: all 0.5s ease-in-out; 
+        }
+        
+        /* NOUVEAU: Survol du Fond (Accélère et Intensifie l'animation) */
+        body:hover {
+            animation-duration: 15s;
+            background-size: 600% 600%; 
+        }
+
+        body::before{
+            content:'';
+            position:absolute;
+            width:600px;
+            height:600px;
+            background:radial-gradient(circle,var(--glow) 0%,transparent 70%);
+            top:-200px;
+            right:-200px;
+            border-radius:50%;
+            animation:pulse 8s ease-in-out infinite;
+            transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
+            z-index: 1; 
+        }
+        
+        /* Survol du Fond (Intensification de la lumière) */
+        body:hover::before {
+            transform: scale(1.3);
+            opacity: 1;
+        }
+
+        /* --- STYLES DES CARTES ET DES COMPOSANTS --- */
+        
+        .container{max-width:1200px;width:100%;position:relative;z-index:10;animation:fadeIn 1s}
+        .header{text-align:center;margin-bottom:60px}
+        .logo{font-size:3.5rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--secondary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;letter-spacing:-2px}
+        .tagline{color:var(--text-sec);font-size:1.25rem;font-weight:300}
+        .status{display:inline-flex;align-items:center;gap:8px;background:rgba(16,185,129,.1);border:1px solid var(--success);color:var(--success);padding:8px 16px;border-radius:20px;font-size:.85rem;margin-top:12px}
+        .status-dot{width:8px;height:8px;background:var(--success);border-radius:50%;animation:pulse 2s infinite}
+        .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px;margin-bottom:40px}
+        
+        /* Style de la Carte */
+        .card{
+            background:var(--surface);
+            border:1px solid rgba(255,255,255,.1);
+            border-radius:24px;
+            padding:40px;
+            transition:all .4s;
+            backdrop-filter:blur(10px);
+            position:relative;
+            overflow:hidden;
+        }
+
+        /* Effet de la ligne de progression/décoration (::before existant) */
+        .card::before{
+            content:'';position:absolute;top:0;left:0;right:0;height:3px;
+            background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));
+            transform:translateX(-100%);transition:transform .6s;
+            z-index: 3; /* Au-dessus de l'effet holographique */
+        }
+        
+        /* NOUVEAU : Conteneur de l'effet holographique (::after) */
+        .card::after {
+            content: '';
+            position: absolute;
+            /* Inset permet de placer l'élément sur tout le contour de la carte */
+            inset: -1px; 
+            border-radius: 24px;
+            background: conic-gradient(
+                from 0deg, 
+                transparent 0%, 
+                var(--primary) 5%, 
+                transparent 30%, 
+                var(--accent) 50%, 
+                transparent 75%, 
+                var(--secondary) 95%, 
+                transparent 100%
+            );
+            z-index: 2; /* Sous le contenu de la carte */
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            filter: brightness(1.5) blur(4px); /* Donne un effet de halo lumineux */
+        }
+
+        /* Effet de Survol de la Carte */
+        .card:hover::before{transform:translateX(0)}
+        
+        /* Survol: Lancement de l'animation holographique */
+        .card:hover::after {
+            opacity: 1;
+            animation: rotate-hologram 4s linear infinite;
+        }
+
+        /* Survol: Décalage de la carte et Ombre bleue intense */
+        .card:hover{
+            transform:translateY(-8px);
+            border-color:rgba(99,102,241,.5);
+            /* Ombre bleue ajoutée pour l'éclat */
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.7), 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+        
+        .icon{width:60px;height:60px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:24px;z-index: 5; position: relative;}
+        .title{color:var(--text);font-size:1.75rem;font-weight:700;margin-bottom:12px;z-index: 5; position: relative;}
+        .desc{color:var(--text-sec);line-height:1.6;margin-bottom:24px;z-index: 5; position: relative;}
+        .link{display:inline-flex;align-items:center;gap:8px;color:var(--primary);text-decoration:none;font-weight:600;padding:12px 24px;background:rgba(99,102,241,.1);border:1px solid var(--primary);border-radius:12px;transition:all .3s;z-index: 5; position: relative;}
+        .link:hover{background:var(--primary);color:#fff;transform:translateX(4px)}
+        .info{background:var(--elevated);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:32px;text-align:center}
+        .info-title{color:var(--text);font-size:1.5rem;font-weight:700;margin-bottom:16px}
+        .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-top:24px}
+        .info-item{background:var(--surface);padding:20px;border-radius:12px}
+        .info-label{color:var(--text-sec);font-size:.85rem;text-transform:uppercase;margin-bottom:8px}
+        .info-value{color:var(--accent);font-size:1.25rem;font-weight:700}
+        .footer{text-align:center;margin-top:40px;color:var(--text-sec)}
+        .badge{display:inline-block;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.3);color:#ffc107;padding:4px 12px;border-radius:12px;font-size:.75rem;margin-left:8px;font-weight:600}
+        @media(max-width:768px){.logo{font-size:2.5rem}.cards,.info-grid{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="logo">BOLT.DIY</h1>
+            <p class="tagline">Plateforme de Développement IA Avancée</p>
+            <div class="status"><span class="status-dot"></span><span>Système Opérationnel</span></div>
+        </div>
+        <div class="cards">
+            <div class="card">
+                <div class="icon">🚀</div>
+                <h2 class="title">Bolt.DIY <span class="badge">Auth requise</span></h2>
+                <p class="desc">Interface principale de développement assisté par IA. Accédez à vos projets et bénéficiez de l'assistance des modèles de langage avancés.</p>
+                <a href="http://192.168.1.200:8080/bolt" target="_blank" rel="noopener noreferrer" class="link">Accéder à Bolt <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>
+            </div>
+            <div class="card">
+                <div class="icon">👥</div>
+                <h2 class="title">User Manager</h2>
+                <p class="desc">Gérez les utilisateurs, les accès et les permissions de votre instance Bolt.DIY depuis une interface intuitive.</p>
+                <a href="http://192.168.1.200:8081" target="_blank" rel="noopener noreferrer" class="link">Gérer les utilisateurs <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>
+            </div>
+        </div>
+        <div class="info">
+            <h3 class="info-title">Informations Système</h3>
+            <div class="info-grid">
+                <div class="info-item"><div class="info-label">Version</div><div class="info-value">2.0</div></div>
+                <div class="info-item"><div class="info-label">Édition</div><div class="info-value">Nbility</div></div>
+                <div class="info-item"><div class="info-label">Statut</div><div class="info-value">En ligne</div></div>
+            </div>
+        </div>
+        <div class="footer"><p>© 2025 Bolt.DIY Nbility Edition</p></div>
+    </div>
+</body>
+</html>

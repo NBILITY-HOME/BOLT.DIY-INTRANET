@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page non trouvée | Bolt.DIY Nbility</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--primary:#6366f1;--secondary:#8b5cf6;--accent:#06b6d4;--dark:#0f172a;--surface:#1e293b;--text:#f1f5f9;--text-sec:#cbd5e1}
+        body{font-family:Inter,sans-serif;background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#334155 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}
+        body::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(99,102,241,.5) 0%,transparent 70%);top:-200px;right:-200px;border-radius:50%;animation:pulse 8s ease-in-out infinite}
+        @keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:.8}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+        .container{max-width:800px;width:100%;text-align:center;position:relative;z-index:10;animation:fadeIn 1s}
+        .error-code{font-size:10rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--secondary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:20px;letter-spacing:-8px}
+        .error-title{color:var(--text);font-size:2.5rem;font-weight:700;margin-bottom:16px}
+        .error-desc{color:var(--text-sec);font-size:1.25rem;margin-bottom:40px;line-height:1.6}
+        .btn{display:inline-flex;align-items:center;gap:12px;color:#fff;background:linear-gradient(135deg,var(--primary),var(--secondary));text-decoration:none;font-weight:600;padding:16px 32px;border-radius:12px;transition:all .3s;border:none;font-size:1rem}
+        .btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(99,102,241,.4)}
+        .illustration{width:200px;height:200px;margin:0 auto 40px;opacity:.8}
+        @media(max-width:768px){.error-code{font-size:6rem}.error-title{font-size:1.75rem}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <svg class="illustration" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="80" stroke="#6366f1" stroke-width="4" opacity="0.3"/>
+            <circle cx="100" cy="100" r="60" stroke="#8b5cf6" stroke-width="4" opacity="0.5"/>
+            <circle cx="100" cy="100" r="40" stroke="#06b6d4" stroke-width="4" opacity="0.7"/>
+            <path d="M100 60 L100 100 L130 115" stroke="#f1f5f9" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="100" cy="100" r="8" fill="#f1f5f9"/>
+        </svg>
+        
+        <div class="error-code">404</div>
+        <h1 class="error-title">Page non trouvée</h1>
+        <p class="error-desc">Désolé, la page que vous recherchez n'existe pas ou a été déplacée.</p>
+        
+        <a href="/" class="btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            Retour à l'accueil
+        </a>
+    </div>
+</body>
+</html>
