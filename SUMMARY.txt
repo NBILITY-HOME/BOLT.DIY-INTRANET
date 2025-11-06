@@ -1,6 +1,6 @@
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║                                                                           ║
-║  📦 RÉCAPITULATIF COMPLET - FICHIERS POUR LE REPOSITORY GITHUB           ║
+║  📦 RÉCAPITULATIF COMPLET - FICHIERS POUR LE REPOSITORY GITHUB            ║
 ║                                                                           ║
 ║  BOLT.DIY-DOCKER-LOCAL v3.0                                               ║
 ║  © Copyright Nbility 2025                                                 ║
@@ -15,7 +15,7 @@
 TOTAL : 15 fichiers à créer dans le repository GitHub
 
 ┌───────────────────────────────────────────────────────────────────────┐
-│ PRIORITÉ : ✅ OBLIGATOIRE  |  ⚠️ IMPORTANT  |  ℹ️ OPTIONNEL          │
+│      PRIORITÉ : ✅ OBLIGATOIRE  |  ⚠️ IMPORTANT  |  ℹ️ OPTIONNEL     │
 └───────────────────────────────────────────────────────────────────────┘
 
 
