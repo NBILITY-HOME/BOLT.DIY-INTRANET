@@ -1,6 +1,10 @@
 services:
   bolt-nbility-core:
-    image: ghcr.io/stackblitz-labs/bolt.diy:latest
+    # FIX NBILITY v4.5: Use local build instead of official image to fix wrangler PATH issue
+    build:
+      context: ./bolt.diy
+      dockerfile: Dockerfile
+      target: bolt-ai-production
     container_name: bolt-nbility-core
     restart: always
     environment:
