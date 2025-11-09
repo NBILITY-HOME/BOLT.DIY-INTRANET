@@ -3,7 +3,6 @@
 $htpasswd_file = getenv('HTPASSWD_FILE') ?: '/var/www/html/.htpasswd';
 $message = '';
 $error = '';
-$debug = '';
 
 // Vérifier si le fichier existe et est accessible
 if (!file_exists($htpasswd_file)) {
@@ -88,8 +87,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $users = [];
 if (file_exists($htpasswd_file)) {
     clearstatcache(true, $htpasswd_file); // Forcer le rafraîchissement du cache
-    $content = file_get_contents($htpasswd_file);
-    $debug = "Contenu du fichier .htpasswd (" . strlen($content) . " octets)";
     
     $lines = file($htpasswd_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
@@ -98,13 +95,7 @@ if (file_exists($htpasswd_file)) {
             $users[] = $parts[0];
         }
     }
-} else {
-    $debug = "Fichier .htpasswd introuvable à : $htpasswd_file";
 }
-
-// Info système
-$htpasswd_check = shell_exec('which htpasswd 2>&1');
-$permissions = file_exists($htpasswd_file) ? substr(sprintf('%o', fileperms($htpasswd_file)), -4) : 'N/A';
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -153,24 +144,6 @@ $permissions = file_exists($htpasswd_file) ? substr(sprintf('%o', fileperms($htp
             color: #721c24; 
             border: 1px solid #f5c6cb; 
         }
-        .debug { 
-            padding: 10px; 
-            margin-bottom: 20px; 
-            border-radius: 8px; 
-            background: #fff3cd; 
-            color: #856404; 
-            border: 1px solid #ffeaa7; 
-            font-size: 12px;
-        }
-        .info-box {
-            background: #e7f3ff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            border-left: 4px solid #2196F3;
-        }
-        .info-box strong { color: #1976D2; }
         .form-section { 
             background: #f8f9fa; 
             padding: 20px; 
@@ -272,14 +245,6 @@ $permissions = file_exists($htpasswd_file) ? substr(sprintf('%o', fileperms($htp
             <?php if ($error): ?>
                 <div class="error">✗ <?= htmlspecialchars($error) ?></div>
             <?php endif; ?>
-            
-            <div class="info-box">
-                <strong>📋 Informations système :</strong><br>
-                Fichier .htpasswd : <code><?= htmlspecialchars($htpasswd_file) ?></code><br>
-                Permissions : <code><?= $permissions ?></code><br>
-                Commande htpasswd : <?= $htpasswd_check ? '✓ Disponible' : '✗ Non disponible' ?><br>
-                <?= htmlspecialchars($debug) ?>
-            </div>
             
             <div class="form-section">
                 <h2>➕ Ajouter un utilisateur</h2>
