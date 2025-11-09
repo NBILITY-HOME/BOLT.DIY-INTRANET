@@ -1,7 +1,7 @@
 #!/bin/bash
 #═══════════════════════════════════════════════════════════════════════════
-# BOLT.DIY NBILITY - Installation Script v4.7
-# Clone complet depuis GitHub repository + Fix Wrangler PATH + Functions + Export Variables
+# BOLT.DIY NBILITY - Installation Script v5.0
+# Architecture Multi-Ports avec Services à la Racine
 # © Copyright Nbility 2025 - contact@nbility.fr
 #═══════════════════════════════════════════════════════════════════════════
 
@@ -12,13 +12,13 @@ printf "\\033[8;55;116t"
 # VÉRIFICATION SUDO
 # ═══════════════════════════════════════════════════════════════════════════
 
-if [ "$EUID" -en 0 ]; then 
+if [ "$EUID" -eq 0 ]; then 
     echo -e "\033[0;31m✗ ERREUR: Ce script NE DOIT PAS être lancé en sudo/root\033[0m"
     echo ""
     echo "Raison: Docker et les fichiers doivent appartenir à votre utilisateur"
     echo ""
     echo "Solution: Lancez le script sans sudo:"
-    echo "  ./install_bolt_nbility_v4_7.sh"
+    echo "  ./install_bolt_nbility_v5.0.sh"
     echo ""
     echo "Si Docker nécessite sudo, ajoutez votre utilisateur au groupe docker:"
     echo "  sudo usermod -aG docker \$USER"
@@ -57,7 +57,6 @@ HTPASSWD_FILE="$NGINX_DIR/.htpasswd"
 BOLT_DIR="$INSTALL_DIR/bolt.diy"
 NETWORK_NAME="bolt-network-app"
 VOLUME_DATA="bolt-nbility-data"
-VOLUME_NGINX_CONF="bolt-nbility-nginx-conf"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # FONCTIONS D'AFFICHAGE
@@ -80,7 +79,7 @@ print_banner() {
     echo "              ║                                                                       ║"
     echo "              ╚═══════════════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
-    echo -e "${MAGENTA}${BOLD}                                    Installation Interactive v4.7${NC}"
+    echo -e "${MAGENTA}${BOLD}                                    Installation Interactive v5.0${NC}"
     echo -e "${CYAN}                        © Copyright Nbility 2025 - contact : contact@nbility.fr${NC}"
     echo ""
 }
@@ -104,12 +103,11 @@ print_info() { echo -e "${CYAN}ℹ${NC} ${CYAN}$1${NC}"; }
 # ═══════════════════════════════════════════════════════════════════════════
 
 check_internet_and_github() {
-    print_banner
-    print_section "VÉRIFICATION DE LA CONNEXION RÉSEAU"
+    print_section "VÉRIFICATION DE LA CONNECTIVITÉ"
     
     print_step "Test de connexion Internet..."
     if ping -c 1 8.8.8.8 &> /dev/null; then
-        print_success "Connexion Internet active"
+        print_success "Connexion Internet OK"
     else
         print_error "Pas de connexion Internet"
         exit 1
@@ -117,82 +115,52 @@ check_internet_and_github() {
     
     print_step "Test d'accès à GitHub..."
     if ping -c 1 github.com &> /dev/null; then
-        print_success "GitHub accessible"
+        print_success "Accès GitHub OK"
     else
-        print_error "GitHub inaccessible"
+        print_error "Impossible d'accéder à GitHub"
         exit 1
     fi
-    
-    echo ""
-    echo -e "${GREEN}${BOLD}Appuyez sur ENTRÉE pour continuer...${NC}"
-    read
 }
 
 check_prerequisites() {
-    print_banner
-    print_section "VÉRIFICATION DES PRÉ-REQUIS"
-    
-    local all_ok=true
+    print_section "VÉRIFICATION DES PRÉREQUIS"
     
     print_step "Vérification de Docker..."
     if command -v docker &> /dev/null; then
-        local docker_version=$(docker --version | cut -d ' ' -f3 | cut -d ',' -f1)
-        print_success "Docker $docker_version installé"
+        DOCKER_VERSION=$(docker --version | awk '{print $3}' | sed 's/,//')
+        print_success "Docker $DOCKER_VERSION installé"
     else
         print_error "Docker n'est pas installé"
-        all_ok=false
+        exit 1
     fi
     
     print_step "Vérification de Docker Compose..."
-    if command -v docker compose &> /dev/null; then
-        local compose_version=$(docker compose version | cut -d ' ' -f4)
-        print_success "Docker Compose $compose_version installé"
+    if docker compose version &> /dev/null; then
+        COMPOSE_VERSION=$(docker compose version --short)
+        print_success "Docker Compose $COMPOSE_VERSION installé"
     else
         print_error "Docker Compose n'est pas installé"
-        all_ok=false
+        exit 1
+    fi
+    
+    print_step "Vérification des permissions Docker..."
+    if docker ps &> /dev/null; then
+        print_success "Permissions Docker OK"
+    else
+        print_error "Pas de permission Docker. Ajoutez votre utilisateur au groupe docker:"
+        echo "  sudo usermod -aG docker \$USER"
+        echo "  newgrp docker"
+        exit 1
     fi
     
     print_step "Vérification de Git..."
     if command -v git &> /dev/null; then
-        local git_version=$(git --version | cut -d ' ' -f3)
-        print_success "Git $git_version installé"
+        GIT_VERSION=$(git --version | awk '{print $3}')
+        print_success "Git $GIT_VERSION installé"
     else
         print_error "Git n'est pas installé"
-        all_ok=false
+        exit 1
     fi
-    
-    print_step "Vérification de htpasswd..."
-    if command -v htpasswd &> /dev/null; then
-        print_success "htpasswd installé"
-    else
-        print_error "htpasswd n'est pas installé (paquet apache2-utils)"
-        all_ok=false
-    fi
-    
-    print_step "Vérification de l'espace disque..."
-    AVAILABLE_SPACE=$(df -BG . | tail -1 | awk '{print $4}' | sed 's/G//')
-    if [ "$AVAILABLE_SPACE" -gt 5 ]; then
-        print_success "Espace disque suffisant - ${AVAILABLE_SPACE}GB disponible"
-    else
-        print_warning "Espace disque limité - ${AVAILABLE_SPACE}GB disponible"
-    fi
-    
-    echo ""
-    if [ "$all_ok" = false ]; then
-        print_error "Certains pré-requis ne sont pas satisfaits"
-        echo ""
-        read -p "Voulez-vous continuer malgré tout ? (o/N) " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Oo]$ ]]; then
-            exit 1
-        fi
-    else
-        print_success "Tous les pré-requis sont satisfaits"
-    fi
-    
-    echo ""
-    echo -e "${GREEN}${BOLD}Appuyez sur ENTRÉE pour continuer...${NC}"
-    read
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -200,188 +168,111 @@ check_prerequisites() {
 # ═══════════════════════════════════════════════════════════════════════════
 
 clone_repository() {
-    print_banner
-    print_section "RÉCUPÉRATION DU PROJET DEPUIS GITHUB"
+    print_section "CLONAGE DU REPOSITORY GITHUB"
     
-    if [ -d "$INSTALL_DIR/.git" ]; then
-        print_step "Repository existant trouvé - Mise à jour..."
-        cd "$INSTALL_DIR"
-        git fetch --all &>/dev/null
-        git reset --hard origin/main &>/dev/null
-        git pull origin main &>/dev/null
-        print_success "Repository mis à jour"
-    else
-        print_step "Clonage du repository complet..."
-        print_info "Ceci peut prendre quelques minutes..."
-        git clone "$REPO_URL" "$INSTALL_DIR" &>/dev/null
-        print_success "Repository cloné"
+    if [ -d "$INSTALL_DIR" ]; then
+        print_warning "Le dossier $REPO_NAME existe déjà"
+        read -p "Voulez-vous le supprimer et recommencer ? (o/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Oo]$ ]]; then
+            print_step "Suppression de l'ancien dossier..."
+            rm -rf "$INSTALL_DIR"
+            print_success "Ancien dossier supprimé"
+        else
+            print_error "Installation annulée"
+            exit 1
+        fi
     fi
+    
+    print_step "Clonage depuis GitHub..."
+    if git clone --recurse-submodules "$REPO_URL" "$INSTALL_DIR"; then
+        print_success "Repository cloné avec succès"
+    else
+        print_error "Échec du clonage"
+        exit 1
+    fi
+    
+    print_step "Initialisation des submodules..."
+    cd "$INSTALL_DIR"
+    git submodule update --init --recursive
+    print_success "Submodules initialisés"
+}
+
+# ═══════════════════════════════════════════════════════════════════════════
+# FIX DOCKERFILE WRANGLER
+# ═══════════════════════════════════════════════════════════════════════════
+
+fix_bolt_dockerfile() {
+    print_section "APPLICATION DU FIX DOCKERFILE WRANGLER"
     
     cd "$INSTALL_DIR"
     
-    # Vérifications de la structure
-    print_step "Vérification de la structure du projet..."
+    local dockerfile_template="$TEMPLATES_DIR/bolt.diy/Dockerfile"
+    local dockerfile_target="$BOLT_DIR/Dockerfile"
     
-    if [ ! -f "docker-compose.yml" ]; then
-        print_error "Fichier manquant: docker-compose.yml"
+    if [ ! -f "$dockerfile_template" ]; then
+        print_error "Template Dockerfile introuvable: $dockerfile_template"
         exit 1
     fi
     
-    if [ ! -d "DATA-LOCAL" ]; then
-        print_error "Dossier manquant: DATA-LOCAL"
-        print_info "Structure trouvée: $(ls -1)"
-        exit 1
+    print_step "Copie du Dockerfile corrigé..."
+    cp "$dockerfile_template" "$dockerfile_target"
+    
+    if grep -q "ENV PATH=\"/app/node_modules/.bin:\${PATH}\"" "$dockerfile_target"; then
+        print_success "Dockerfile corrigé appliqué avec succès"
+        print_info "Le fix wrangler PATH est actif"
+    else
+        print_warning "Le Dockerfile ne contient pas le fix wrangler"
     fi
     
-    if [ ! -d "bolt.diy" ]; then
-        print_error "Dossier manquant: bolt.diy"
-        exit 1
-    fi
-    
-    if [ ! -f "DATA-LOCAL/nginx/nginx.conf" ]; then
-        print_error "Fichier manquant: DATA-LOCAL/nginx/nginx.conf"
-        exit 1
-    fi
-    
-    print_success "Structure du projet validée"
-    
-    # CORRECTION CRITIQUE : Remplacer ./DATA/ par ./DATA-LOCAL/ dans docker-compose.yml
-    print_step "Correction des chemins dans docker-compose.yml..."
-    sed -i 's|./DATA/|./DATA-LOCAL/|g' docker-compose.yml
-    print_success "Chemins corrigés (DATA → DATA-LOCAL)"
-    
-    echo ""
-    print_success "Projet récupéré avec succès"
     echo ""
     echo -e "${GREEN}${BOLD}Appuyez sur ENTRÉE pour continuer...${NC}"
     read
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
-# CORRECTION DU DOCKERFILE BOLT.DIY ET DOCKER-COMPOSE
+# VALIDATION DES PORTS
 # ═══════════════════════════════════════════════════════════════════════════
 
-fix_bolt_dockerfile() {
-    print_banner
-    print_section "APPLICATION DU FIX DOCKERFILE COMPLET"
-    
-    print_step "Vérification du template Dockerfile..."
-    
-    local TEMPLATE_DOCKERFILE="$TEMPLATES_DIR/bolt.diy/Dockerfile"
-    
-    if [ ! -f "$TEMPLATE_DOCKERFILE" ]; then
-        print_error "Template Dockerfile non trouvé: $TEMPLATE_DOCKERFILE"
-        exit 1
+check_port_available() {
+    local port=$1
+    if ss -tuln | grep -q ":$port "; then
+        return 1
     fi
-    
-    print_success "Template Dockerfile trouvé"
-    
-    print_step "Sauvegarde du Dockerfile original de bolt.diy..."
-    if [ -f "$BOLT_DIR/Dockerfile" ]; then
-        cp "$BOLT_DIR/Dockerfile" "$BOLT_DIR/Dockerfile.original"
-        print_success "Sauvegarde créée: Dockerfile.original"
-    fi
-    
-    print_step "Copie du Dockerfile corrigé depuis le template..."
-    cp "$TEMPLATE_DOCKERFILE" "$BOLT_DIR/Dockerfile"
-    print_success "Dockerfile corrigé copié vers bolt.diy/"
-    
-    print_step "Vérification du contenu du Dockerfile..."
-    if grep -q 'COPY --from=build /app/functions /app/functions' "$BOLT_DIR/Dockerfile"; then
-        print_success "Le Dockerfile contient le fix complet (PATH + functions)"
-    else
-        print_warning "Le Dockerfile pourrait ne pas contenir tous les fix"
-    fi
-    
-    print_step "Vérification du docker-compose.yml..."
-    
-    if [ ! -f "$INSTALL_DIR/docker-compose.yml" ]; then
-        print_error "docker-compose.yml non trouvé"
-        exit 1
-    fi
-    
-    # Vérifier si le fix est déjà appliqué
-    if grep -q "context: ./bolt.diy" "$INSTALL_DIR/docker-compose.yml"; then
-        print_info "Le docker-compose.yml utilise déjà le build local"
-    else
-        print_step "Modification du docker-compose.yml pour utiliser le build local..."
-        
-        # Sauvegarder l'original
-        cp "$INSTALL_DIR/docker-compose.yml" "$INSTALL_DIR/docker-compose.yml.backup"
-        print_info "Sauvegarde créée: docker-compose.yml.backup"
-        
-        # Remplacer image: par build:
-        cat > "$INSTALL_DIR/docker-compose.yml.tmp" << 'DOCKERCOMPOSE'
-services:
-  bolt-nbility-core:
-    # FIX NBILITY v4.6: Use local build instead of official image to fix wrangler PATH issue
-    build:
-      context: ./bolt.diy
-      dockerfile: Dockerfile
-      target: bolt-ai-production
-    container_name: bolt-nbility-core
-    restart: always
-    environment:
-      - NODE_ENV=production
-    volumes:
-      - bolt-nbility-data:/app/data
-    expose:
-      - "5173"
-    networks:
-      - bolt-network-app
+    return 0
+}
 
-  bolt-nbility-nginx:
-    image: nginx:stable-alpine
-    container_name: bolt-nbility-nginx
-    restart: always
-    depends_on:
-      - bolt-nbility-core
-    volumes:
-      - ./DATA-LOCAL/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./DATA-LOCAL/nginx/html:/usr/share/nginx/html:ro
-      - ${HTPASSWD_FILE}:/etc/nginx/.htpasswd:ro
-    ports:
-      - "${HOST_PORT_HTTP}:80"
-      - "${HTTPS_HOST_PORT}:443"
-    networks:
-      - bolt-network-app
-
-  bolt-user-manager:
-    image: bolt-user-manager:latest
-    container_name: bolt-user-manager
-    restart: always
-    user: "root"
-    volumes:
-      - ./DATA-LOCAL/user-manager/app:/var/www/html
-      - ${HTPASSWD_FILE}:/app/.htpasswd:rw
-    environment:
-      HTPASSWD_FILE: /app/.htpasswd
-    ports:
-      - "${HOST_PORT_UM}:80"
-    networks:
-      - bolt-network-app
-
-networks:
-  bolt-network-app:
-    external: true
+validate_port() {
+    local port=$1
+    local port_name=$2
+    local reserved_port=$3
     
-volumes:
-  bolt-nbility-data:
-    external: true
-  bolt-nbility-nginx-conf:
-    external: true
-DOCKERCOMPOSE
-        
-        mv "$INSTALL_DIR/docker-compose.yml.tmp" "$INSTALL_DIR/docker-compose.yml"
-        print_success "docker-compose.yml modifié pour utiliser le build local"
+    if [ -z "$port" ]; then
+        print_error "Le port ne peut pas être vide"
+        return 1
     fi
     
-    echo ""
-    print_success "Fix Dockerfile complet appliqué avec succès"
-    print_info "Le conteneur bolt-nbility-core sera construit localement avec tous les fichiers nécessaires"
-    echo ""
-    echo -e "${GREEN}${BOLD}Appuyez sur ENTRÉE pour continuer...${NC}"
-    read
+    if ! [[ "$port" =~ ^[0-9]+$ ]]; then
+        print_error "Le port doit être un nombre"
+        return 1
+    fi
+    
+    if [ "$port" -lt 1024 ] || [ "$port" -gt 65535 ]; then
+        print_error "Le port doit être entre 1024 et 65535"
+        return 1
+    fi
+    
+    if [ "$port" -eq "$reserved_port" ]; then
+        print_error "Ce port est réservé pour Bolt.DIY"
+        return 1
+    fi
+    
+    if ! check_port_available "$port"; then
+        print_error "Le port $port est déjà utilisé"
+        return 1
+    fi
+    
+    return 0
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -392,6 +283,7 @@ get_configuration() {
     print_banner
     print_section "CONFIGURATION RÉSEAU"
     
+    # IP SERVEUR
     echo -e "${CYAN}╭─────────────────────────────────────────────────────────────────╮${NC}"
     echo -e "${CYAN}│${NC} ${WHITE}${BOLD}Adresse IP locale du serveur${NC}"
     echo -e "${CYAN}╰─────────────────────────────────────────────────────────────────╯${NC}"
@@ -401,6 +293,7 @@ get_configuration() {
     print_success "IP locale définie: $LOCAL_IP"
     echo ""
     
+    # IP BOX
     echo -e "${CYAN}╭─────────────────────────────────────────────────────────────────╮${NC}"
     echo -e "${CYAN}│${NC} ${WHITE}${BOLD}Adresse IP de la box internet (Gateway)${NC}"
     echo -e "${CYAN}╰─────────────────────────────────────────────────────────────────╯${NC}"
@@ -412,28 +305,75 @@ get_configuration() {
     
     print_section "CONFIGURATION DES PORTS"
     
+    # PORT BOLT (PREMIER)
     echo -e "${CYAN}╭─────────────────────────────────────────────────────────────────╮${NC}"
-    echo -e "${CYAN}│${NC} ${WHITE}${BOLD}Port HTTP pour l'accès à Bolt.DIY${NC}"
+    echo -e "${CYAN}│${NC} ${WHITE}${BOLD}Port pour Bolt.DIY (Login + Application)${NC}"
     echo -e "${CYAN}╰─────────────────────────────────────────────────────────────────╯${NC}"
-    read -p "Port HTTP [8080]: " HOST_PORT_HTTP
-    export HOST_PORT_HTTP=${HOST_PORT_HTTP:-8080}
-    print_success "Port HTTP: $HOST_PORT_HTTP"
+    echo -e "${CYAN}${ARROW}${NC} Ce port affichera la page de login et l'application Bolt"
+    echo -e "${YELLOW}${ARROW}${NC} Ce port sera réservé et ne pourra pas être réutilisé"
+    while true; do
+        read -p "Port BOLT [6969]: " HOST_PORT_BOLT
+        HOST_PORT_BOLT=${HOST_PORT_BOLT:-6969}
+        if validate_port "$HOST_PORT_BOLT" "BOLT" "0"; then
+            export HOST_PORT_BOLT
+            print_success "Port BOLT: $HOST_PORT_BOLT"
+            break
+        fi
+    done
     echo ""
     
+    # PORT HTTPS
     echo -e "${CYAN}╭─────────────────────────────────────────────────────────────────╮${NC}"
-    echo -e "${CYAN}│${NC} ${WHITE}${BOLD}Port HTTPS pour Bolt.DIY${NC}"
+    echo -e "${CYAN}│${NC} ${WHITE}${BOLD}Port HTTPS (Réservé pour SSL futur)${NC}"
     echo -e "${CYAN}╰─────────────────────────────────────────────────────────────────╯${NC}"
-    read -p "Port HTTPS [8443]: " HTTPS_HOST_PORT
-    export HTTPS_HOST_PORT=${HTTPS_HOST_PORT:-8443}
-    print_success "Port HTTPS: $HTTPS_HOST_PORT"
+    while true; do
+        read -p "Port HTTPS [8443]: " HTTPS_HOST_PORT
+        HTTPS_HOST_PORT=${HTTPS_HOST_PORT:-8443}
+        if validate_port "$HTTPS_HOST_PORT" "HTTPS" "$HOST_PORT_BOLT"; then
+            export HTTPS_HOST_PORT
+            print_success "Port HTTPS: $HTTPS_HOST_PORT"
+            break
+        fi
+    done
     echo ""
     
+    # PORT HOME
     echo -e "${CYAN}╭─────────────────────────────────────────────────────────────────╮${NC}"
-    echo -e "${CYAN}│${NC} ${WHITE}${BOLD}Port pour le User Manager${NC}"
+    echo -e "${CYAN}│${NC} ${WHITE}${BOLD}Port pour la Page d'Accueil${NC}"
     echo -e "${CYAN}╰─────────────────────────────────────────────────────────────────╯${NC}"
-    read -p "Port User Manager [8081]: " HOST_PORT_UM
-    export HOST_PORT_UM=${HOST_PORT_UM:-8081}
-    print_success "Port User Manager: $HOST_PORT_UM"
+    echo -e "${CYAN}${ARROW}${NC} Page statique avec liens vers Bolt et Admin Manager"
+    while true; do
+        read -p "Port HOME [7070]: " HOST_PORT_HOME
+        HOST_PORT_HOME=${HOST_PORT_HOME:-7070}
+        if validate_port "$HOST_PORT_HOME" "HOME" "$HOST_PORT_BOLT"; then
+            if [ "$HOST_PORT_HOME" -eq "$HTTPS_HOST_PORT" ]; then
+                print_error "Ce port est déjà utilisé pour HTTPS"
+                continue
+            fi
+            export HOST_PORT_HOME
+            print_success "Port HOME: $HOST_PORT_HOME"
+            break
+        fi
+    done
+    echo ""
+    
+    # PORT ADMIN MANAGER
+    echo -e "${CYAN}╭─────────────────────────────────────────────────────────────────╮${NC}"
+    echo -e "${CYAN}│${NC} ${WHITE}${BOLD}Port pour le Admin Manager${NC}"
+    echo -e "${CYAN}╰─────────────────────────────────────────────────────────────────╯${NC}"
+    while true; do
+        read -p "Port Admin Manager [7071]: " HOST_PORT_UM
+        HOST_PORT_UM=${HOST_PORT_UM:-7071}
+        if validate_port "$HOST_PORT_UM" "Admin Manager" "$HOST_PORT_BOLT"; then
+            if [ "$HOST_PORT_UM" -eq "$HTTPS_HOST_PORT" ] || [ "$HOST_PORT_UM" -eq "$HOST_PORT_HOME" ]; then
+                print_error "Ce port est déjà utilisé"
+                continue
+            fi
+            export HOST_PORT_UM
+            print_success "Port Admin Manager: $HOST_PORT_UM"
+            break
+        fi
+    done
     echo ""
     
     print_section "AUTHENTIFICATION NGINX"
@@ -501,12 +441,10 @@ generate_html_from_templates() {
         return 0
     fi
     
-    local protocol="http"
-    
     sed -e "s|{{LOCAL_IP}}|$LOCAL_IP|g" \
-        -e "s|{{HOST_PORT_HTTP}}|$HOST_PORT_HTTP|g" \
+        -e "s|{{HOST_PORT_BOLT}}|$HOST_PORT_BOLT|g" \
+        -e "s|{{HOST_PORT_HOME}}|$HOST_PORT_HOME|g" \
         -e "s|{{HOST_PORT_UM}}|$HOST_PORT_UM|g" \
-        -e "s|{{PROTOCOL}}|$protocol|g" \
         "$template_file" > "$output_file"
     
     print_success "$description générée"
@@ -530,7 +468,7 @@ install_bolt() {
     
     print_step "Configuration du fichier .env pour Bolt.DIY..."
     cat > "$BOLT_DIR/.env" << ENVFILE
-BASE_URL=http://$LOCAL_IP:$HOST_PORT_HTTP/
+BASE_URL=http://$LOCAL_IP:$HOST_PORT_BOLT/
 OPENAI_API_KEY="${OPENAI_KEY}"
 ANTHROPIC_API_KEY="${ANTHROPIC_KEY}"
 GOOGLE_GENERATIVE_AI_API_KEY="${GEMINI_KEY}"
@@ -551,16 +489,18 @@ ENVFILE
                 "page d'accueil"
         fi
         
+        if [ -f "$TEMPLATES_DIR/login.html" ]; then
+            generate_html_from_templates \
+                "$TEMPLATES_DIR/login.html" \
+                "$NGINX_DIR/html/login.html" \
+                "page de login"
+        fi
+        
         if [ -f "$TEMPLATES_DIR/404.html" ]; then
             generate_html_from_templates \
                 "$TEMPLATES_DIR/404.html" \
                 "$NGINX_DIR/html/404.html" \
                 "page d'erreur"
-        fi
-        
-        if [ -f "$TEMPLATES_DIR/index-maintenance.html" ]; then
-            cp "$TEMPLATES_DIR/index-maintenance.html" "$NGINX_DIR/html/index-maintenance-backup.html"
-            print_info "Template de maintenance sauvegardé"
         fi
         
         print_success "Pages HTML générées"
@@ -574,88 +514,81 @@ ENVFILE
     
     print_step "Configuration des volumes Docker..."
     docker volume create "$VOLUME_DATA" 2>/dev/null || print_info "Volume data existant"
-    docker volume create "$VOLUME_NGINX_CONF" 2>/dev/null || print_info "Volume nginx existant"
     print_success "Volumes Docker prêts"
     
-    print_step "Génération du fichier htpasswd..."
-    htpasswd -cb "$HTPASSWD_FILE" "$NGX_USER" "$NGX_PASS" &> /dev/null
-    print_success "Authentification configurée"
-    
-    print_step "Application des droits sur le fichier .htpasswd..."
+    print_step "Création du fichier htpasswd..."
+    if command -v htpasswd &> /dev/null; then
+        htpasswd -cb "$HTPASSWD_FILE" "$NGX_USER" "$NGX_PASS"
+    else
+        echo "$NGX_USER:$(openssl passwd -apr1 "$NGX_PASS")" > "$HTPASSWD_FILE"
+    fi
     chmod 666 "$HTPASSWD_FILE"
-    print_success "Droits appliqués"
+    print_success "Fichier htpasswd créé"
     
-    # Export des variables pour docker-compose
-    export LOCAL_IP
-    export HOST_PORT_HTTP
-    export HTTPS_HOST_PORT
-    export HOST_PORT_UM
-    export HTPASSWD_FILE
+    print_step "Création du fichier .env Docker Compose..."
+    cat > "$INSTALL_DIR/.env" << ENVFILE
+# Configuration des ports
+HOST_PORT_BOLT=$HOST_PORT_BOLT
+HOST_PORT_HOME=$HOST_PORT_HOME
+HOST_PORT_UM=$HOST_PORT_UM
+HTTPS_HOST_PORT=$HTTPS_HOST_PORT
+
+# Fichier htpasswd
+HTPASSWD_FILE=$HTPASSWD_FILE
+ENVFILE
+    print_success "Fichier .env créé"
     
-    print_step "Construction de l'image bolt-user-manager..."
-    print_info "Construction depuis le Dockerfile local..."
-    if ! docker build -t bolt-user-manager:latest -f "$DATA_DIR/Dockerfile" "$DATA_DIR"; then
-        print_error "Échec de la construction de l'image bolt-user-manager"
+    print_section "BUILD ET DÉMARRAGE DES CONTENEURS"
+    
+    print_step "Build de l'image Bolt.DIY (cela peut prendre plusieurs minutes)..."
+    if docker compose build bolt-nbility-core 2>&1 | tee /tmp/bolt-build.log | grep -E "(Step|Building|Successfully)"; then
+        print_success "Build de bolt-nbility-core réussi"
+    else
+        print_error "Échec du build"
+        cat /tmp/bolt-build.log
         exit 1
     fi
-    print_success "Image bolt-user-manager construite"
     
-    print_step "Construction de l'image bolt-nbility-core..."
-    print_info "Construction depuis le Dockerfile corrigé de bolt.diy (cela peut prendre plusieurs minutes)..."
-    print_warning "Première construction: patientez 5-10 minutes selon votre machine..."
-    if ! docker compose build --no-cache bolt-nbility-core; then
-        print_error "Échec de la construction de l'image bolt-nbility-core"
-        print_info "Logs Docker Compose:"
-        docker compose logs bolt-nbility-core
+    print_step "Démarrage des conteneurs..."
+    if docker compose up -d; then
+        print_success "Conteneurs démarrés"
+    else
+        print_error "Échec du démarrage"
         exit 1
     fi
-    print_success "Image bolt-nbility-core construite avec succès"
     
+    print_step "Vérification des conteneurs..."
+    sleep 5
+    docker compose ps
+    
+    print_section "RÉSUMÉ DE L'INSTALLATION"
+    
+    echo -e "${GREEN}${BOLD}✓ Installation terminée avec succès !${NC}"
     echo ""
-    print_step "Démarrage des services Docker..."
-    if ! docker compose up -d; then
-        print_error "Échec du démarrage des services Docker"
-        print_info "Logs Docker Compose:"
-        docker compose logs
-        exit 1
-    fi
-    print_success "Services démarrés"
-    
-    print_step "Attente du démarrage complet - 30 secondes..."
-    local count=0
-    while [ $count -lt 30 ]; do
-        count=$((count + 1))
-        printf "\r  Chargement... [%d/30]" "$count"
-        sleep 1
-    done
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC} ${WHITE}${BOLD}ACCÈS AUX SERVICES${NC}"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC} ${YELLOW}Login Bolt.DIY:${NC}      http://$LOCAL_IP:$HOST_PORT_BOLT/"
+    echo -e "${CYAN}║${NC} ${YELLOW}Page d'Accueil:${NC}      http://$LOCAL_IP:$HOST_PORT_HOME/"
+    echo -e "${CYAN}║${NC} ${YELLOW}Admin Manager:${NC}       http://$LOCAL_IP:$HOST_PORT_UM/"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC} ${WHITE}${BOLD}IDENTIFIANTS${NC}"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC} ${YELLOW}Utilisateur:${NC}         $NGX_USER"
+    echo -e "${CYAN}║${NC} ${YELLOW}Mot de passe:${NC}        ••••••••"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC} ${WHITE}${BOLD}ARCHITECTURE${NC}"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC} Port $HOST_PORT_BOLT → Login + Bolt.DIY (à la racine /)"
+    echo -e "${CYAN}║${NC} Port $HOST_PORT_HOME → Page d'accueil statique"
+    echo -e "${CYAN}║${NC} Port $HOST_PORT_UM → Admin Manager"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    print_success "Démarrage terminé"
-    echo ""
-    
-    print_section "INSTALLATION TERMINÉE AVEC SUCCÈS"
-    
-    echo -e "${WHITE}${BOLD}URLs d'accès :${NC}"
-    echo -e "  ${CYAN}${ARROW}${NC} Bolt.DIY         : ${GREEN}http://$LOCAL_IP:$HOST_PORT_HTTP${NC}"
-    echo -e "  ${CYAN}${ARROW}${NC} User Manager     : ${GREEN}http://$LOCAL_IP:$HOST_PORT_UM${NC}"
-    echo ""
-    
-    echo -e "${WHITE}${BOLD}Identifiants :${NC}"
-    echo -e "  ${CYAN}${ARROW}${NC} Utilisateur      : ${GREEN}$NGX_USER${NC}"
-    echo -e "  ${CYAN}${ARROW}${NC} Mot de passe     : ${GREEN}********${NC}"
-    echo ""
-    
-    echo -e "${WHITE}${BOLD}Configuration réseau :${NC}"
-    echo -e "  ${CYAN}${ARROW}${NC} IP serveur       : ${GREEN}$LOCAL_IP${NC}"
-    echo -e "  ${CYAN}${ARROW}${NC} Gateway (box)    : ${GREEN}$GATEWAY_IP${NC}"
-    echo ""
-    
-    echo -e "${WHITE}${BOLD}Commandes utiles :${NC}"
-    echo -e "  ${CYAN}${ARROW}${NC} Logs             : ${YELLOW}cd $INSTALL_DIR && docker compose logs -f${NC}"
-    echo -e "  ${CYAN}${ARROW}${NC} Arrêter          : ${YELLOW}cd $INSTALL_DIR && docker compose down${NC}"
-    echo -e "  ${CYAN}${ARROW}${NC} Redémarrer       : ${YELLOW}cd $INSTALL_DIR && docker compose restart${NC}"
-    echo ""
-    
-    echo -e "${CYAN}═══════════════════════════════════════════════════════════════════════${NC}"
+    echo -e "${MAGENTA}${BOLD}Commandes utiles:${NC}"
+    echo -e "  ${CYAN}${ARROW}${NC} Voir les logs:        docker compose logs -f"
+    echo -e "  ${CYAN}${ARROW}${NC} Arrêter:              docker compose stop"
+    echo -e "  ${CYAN}${ARROW}${NC} Redémarrer:           docker compose restart"
+    echo -e "  ${CYAN}${ARROW}${NC} Status:               docker compose ps"
     echo ""
 }
 
