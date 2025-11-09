@@ -1,114 +1,57 @@
 <?php
-// Configuration
 $htpasswd_file = getenv('HTPASSWD_FILE') ?: '/var/www/html/.htpasswd';
 $message = '';
 $error = '';
 
-// Vérifier si le fichier existe et est accessible
 if (!file_exists($htpasswd_file)) {
     touch($htpasswd_file);
     chmod($htpasswd_file, 0666);
 }
 
-// Traitement des actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
     
     if ($action === 'add' && $username && $password) {
-        // Vérifier que htpasswd est disponible
-        $htpasswd_check = trim(shell_exec('which htpasswd 2>&1'));
+        $cmd = 'htpasswd -nbB ' . escapeshellarg($username) . ' ' . escapeshellarg($password) . ' 2>&1';
+        $output = trim(shell_exec($cmd));
         
-        if ($htpasswd_check) {
-            // Utiliser htpasswd avec algorithme bcrypt
-            $cmd = sprintf(
-                'htpasswd -nbB %s %s 2>&1',
-                escapeshellarg($username),
-                escapeshellarg($password)
-            );
-            $output = shell_exec($cmd);
-            $output = trim($output); // CRITIQUE: trim pour enlever \n de htpasswd
+        if ($output && strpos($output, ':') !== false) {
+            $content = file_exists($htpasswd_file) ? file_get_contents($htpasswd_file) : '';
+            $lines = array_filter(explode("\n", $content), function($l) { return trim($l) !== ''; });
+            $existing = array_map(function($l) { return explode(':', trim($l))[0]; }, $lines);
             
-            if ($output && strpos($output, ':') !== false) {
-                // Vérifier que l'utilisateur n'existe pas déjà
-                $existing_users = [];
-                if (file_exists($htpasswd_file) && filesize($htpasswd_file) > 0) {
-                    $lines = file($htpasswd_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-                    foreach ($lines as $line) {
-                        $line = trim($line);
-                        if ($line && strpos($line, ':') !== false) {
-                            $existing_users[] = explode(':', $line)[0];
-                        }
-                    }
-                }
-                
-                if (in_array($username, $existing_users)) {
-                    $error = "L'utilisateur '$username' existe déjà";
-                } else {
-                    // Ajouter la nouvelle ligne avec UN SEUL retour à la ligne
-                    $result = file_put_contents($htpasswd_file, $output . "\n", FILE_APPEND | LOCK_EX);
-                    
-                    if ($result !== false) {
-                        // Vérifier les permissions
-                        chmod($htpasswd_file, 0666);
-                        $message = "Utilisateur '$username' ajouté avec succès";
-                    } else {
-                        $error = "Impossible d'écrire dans le fichier .htpasswd";
-                    }
-                }
+            if (in_array($username, $existing)) {
+                $error = "L'utilisateur existe déjà";
             } else {
-                $error = "Erreur lors de la génération du hash : " . htmlspecialchars($output);
-            }
-        } else {
-            $error = "La commande htpasswd n'est pas disponible";
-        }
-        
-    } elseif ($action === 'delete' && $username) {
-        if (!file_exists($htpasswd_file)) {
-            $error = "Fichier .htpasswd introuvable";
-        } else {
-            $lines = file($htpasswd_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            $new_lines = [];
-            foreach ($lines as $line) {
-                $line = trim($line);
-                if ($line && strpos($line, ':') !== false) {
-                    $user = explode(':', $line)[0];
-                    if ($user !== $username) {
-                        $new_lines[] = $line;
-                    }
-                }
-            }
-            
-            $result = file_put_contents($htpasswd_file, implode("\n", $new_lines) . "\n", LOCK_EX);
-            
-            if ($result !== false) {
+                $lines[] = $output;
+                file_put_contents($htpasswd_file, implode("\n", $lines) . "\n", LOCK_EX);
                 chmod($htpasswd_file, 0666);
-                $message = "Utilisateur '$username' supprimé";
-            } else {
-                $error = "Impossible de supprimer l'utilisateur";
+                $message = "Utilisateur ajouté avec succès";
             }
         }
+    } elseif ($action === 'delete' && $username) {
+        $content = file_get_contents($htpasswd_file);
+        $lines = array_filter(explode("\n", $content), function($line) use ($username) {
+            $line = trim($line);
+            return $line && !str_starts_with($line, $username . ':');
+        });
+        file_put_contents($htpasswd_file, implode("\n", $lines) . "\n", LOCK_EX);
+        chmod($htpasswd_file, 0666);
+        $message = "Utilisateur supprimé";
     }
 }
 
-// Lire la liste des utilisateurs
 $users = [];
 if (file_exists($htpasswd_file) && filesize($htpasswd_file) > 0) {
-    clearstatcache(true, $htpasswd_file);
-    
-    $lines = file($htpasswd_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
+    $content = file_get_contents($htpasswd_file);
+    foreach (explode("\n", $content) as $line) {
         $line = trim($line);
-        if ($line && strpos($line, ':') !== false) {
-            $parts = explode(':', $line, 2);
-            if (!empty($parts[0])) {
-                $users[] = trim($parts[0]);
-            }
+        if ($line && str_contains($line, ':')) {
+            $users[] = explode(':', $line)[0];
         }
     }
-    
-    // Enlever les doublons et trier
     $users = array_unique($users);
     sort($users);
 }
@@ -116,195 +59,78 @@ if (file_exists($htpasswd_file) && filesize($htpasswd_file) > 0) {
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔐 Bolt.DIY User Manager</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            min-height: 100vh; 
-            padding: 20px; 
-        }
-        .container { 
-            max-width: 900px; 
-            margin: 0 auto; 
-            background: white; 
-            border-radius: 12px; 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
-            overflow: hidden; 
-        }
-        .header { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            color: white; 
-            padding: 30px; 
-            text-align: center; 
-        }
-        .header h1 { font-size: 28px; margin-bottom: 5px; }
-        .header p { opacity: 0.9; font-size: 14px; }
-        .content { padding: 30px; }
-        .message { 
-            padding: 15px; 
-            margin-bottom: 20px; 
-            border-radius: 8px; 
-            background: #d4edda; 
-            color: #155724; 
-            border: 1px solid #c3e6cb; 
-            font-weight: 600;
-        }
-        .error { 
-            padding: 15px; 
-            margin-bottom: 20px; 
-            border-radius: 8px; 
-            background: #f8d7da; 
-            color: #721c24; 
-            border: 1px solid #f5c6cb; 
-            font-weight: 600;
-        }
-        .form-section { 
-            background: #f8f9fa; 
-            padding: 20px; 
-            border-radius: 8px; 
-            margin-bottom: 30px; 
-        }
-        .form-section h2 { 
-            margin-bottom: 15px; 
-            color: #333; 
-            font-size: 18px; 
-        }
-        .form-group { margin-bottom: 15px; }
-        label { 
-            display: block; 
-            margin-bottom: 5px; 
-            color: #555; 
-            font-weight: 500; 
-        }
-        input[type="text"], input[type="password"] { 
-            width: 100%; 
-            padding: 10px; 
-            border: 2px solid #ddd; 
-            border-radius: 6px; 
-            font-size: 14px; 
-            transition: border-color 0.3s; 
-        }
-        input:focus { 
-            outline: none; 
-            border-color: #667eea; 
-        }
-        button { 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            color: white; 
-            border: none; 
-            padding: 12px 24px; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-size: 14px; 
-            font-weight: 600; 
-            transition: transform 0.2s; 
-        }
-        button:hover { transform: translateY(-2px); }
-        button.delete { 
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
-            padding: 8px 16px;
-            font-size: 13px;
-        }
-        .users-list { 
-            background: #f8f9fa; 
-            padding: 20px; 
-            border-radius: 8px; 
-        }
-        .users-list h2 { 
-            margin-bottom: 15px; 
-            color: #333; 
-            font-size: 18px; 
-        }
-        .user-item { 
-            background: white; 
-            padding: 15px; 
-            margin-bottom: 10px; 
-            border-radius: 6px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border: 1px solid #e0e0e0; 
-        }
-        .user-name { 
-            font-weight: 600; 
-            color: #333; 
-            font-size: 15px;
-        }
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-        .footer { 
-            text-align: center; 
-            padding: 20px; 
-            color: #666; 
-            font-size: 12px; 
-            border-top: 1px solid #e0e0e0; 
-        }
-    </style>
+<meta charset="UTF-8">
+<title>🔐 Bolt.DIY User Manager</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px}
+.container{max-width:900px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.3);overflow:hidden}
+.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:30px;text-align:center}
+.header h1{font-size:28px;margin-bottom:5px}
+.header p{opacity:0.9;font-size:14px}
+.content{padding:30px}
+.message{padding:15px;margin-bottom:20px;border-radius:8px;background:#d4edda;color:#155724;border:1px solid #c3e6cb;font-weight:600}
+.error{padding:15px;margin-bottom:20px;border-radius:8px;background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;font-weight:600}
+.form-section{background:#f8f9fa;padding:20px;border-radius:8px;margin-bottom:30px}
+.form-section h2{margin-bottom:15px;color:#333;font-size:18px}
+.form-group{margin-bottom:15px}
+label{display:block;margin-bottom:5px;color:#555;font-weight:500}
+input[type="text"],input[type="password"]{width:100%;padding:10px;border:2px solid #ddd;border-radius:6px;font-size:14px;transition:border-color 0.3s}
+input:focus{outline:none;border-color:#667eea}
+button{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:600;transition:transform 0.2s}
+button:hover{transform:translateY(-2px)}
+button.delete{background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);padding:8px 16px;font-size:13px}
+.users-list{background:#f8f9fa;padding:20px;border-radius:8px}
+.users-list h2{margin-bottom:15px;color:#333;font-size:18px}
+.user-item{background:#fff;padding:15px;margin-bottom:10px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;border:1px solid #e0e0e0}
+.user-name{font-weight:600;color:#333;font-size:15px}
+.empty-state{text-align:center;padding:40px;color:#999}
+.footer{text-align:center;padding:20px;color:#666;font-size:12px;border-top:1px solid #e0e0e0}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔐 Bolt.DIY User Manager</h1>
-            <p>Nbility Edition - Gestion des utilisateurs</p>
-        </div>
-        
-        <div class="content">
-            <?php if ($message): ?>
-                <div class="message">✓ <?= htmlspecialchars($message) ?></div>
-            <?php endif; ?>
-            
-            <?php if ($error): ?>
-                <div class="error">✗ <?= htmlspecialchars($error) ?></div>
-            <?php endif; ?>
-            
-            <div class="form-section">
-                <h2>➕ Ajouter un utilisateur</h2>
-                <form method="POST">
-                    <input type="hidden" name="action" value="add">
-                    <div class="form-group">
-                        <label>Nom d'utilisateur</label>
-                        <input type="text" name="username" required placeholder="ex: pierre" autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label>Mot de passe</label>
-                        <input type="password" name="password" required placeholder="Minimum 6 caractères" autocomplete="new-password">
-                    </div>
-                    <button type="submit">Ajouter l'utilisateur</button>
-                </form>
-            </div>
-            
-            <div class="users-list">
-                <h2>👥 Utilisateurs existants (<?= count($users) ?>)</h2>
-                <?php if (empty($users)): ?>
-                    <div class="empty-state">
-                        <p>Aucun utilisateur trouvé</p>
-                        <p style="font-size: 12px; margin-top: 10px; color: #aaa;">Ajoutez votre premier utilisateur ci-dessus</p>
-                    </div>
-                <?php else: ?>
-                    <?php foreach ($users as $user): ?>
-                        <div class="user-item">
-                            <span class="user-name">👤 <?= htmlspecialchars($user) ?></span>
-                            <form method="POST" style="display: inline;" onsubmit="return confirm('Supprimer <?= htmlspecialchars($user) ?> ?')">
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="username" value="<?= htmlspecialchars($user) ?>">
-                                <button type="submit" class="delete">Supprimer</button>
-                            </form>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-        </div>
-        
-        <div class="footer">
-            © 2025 Nbility - Bolt.DIY Intranet Edition v5.1
-        </div>
-    </div>
+<div class="container">
+<div class="header">
+<h1>🔐 Bolt.DIY User Manager</h1>
+<p>Nbility Edition - Gestion des utilisateurs</p>
+</div>
+<div class="content">
+<?php if($message):?><div class="message">✓ <?=htmlspecialchars($message)?></div><?php endif;?>
+<?php if($error):?><div class="error">✗ <?=htmlspecialchars($error)?></div><?php endif;?>
+<div class="form-section">
+<h2>➕ Ajouter un utilisateur</h2>
+<form method="POST">
+<input type="hidden" name="action" value="add">
+<div class="form-group">
+<label>Nom d'utilisateur</label>
+<input type="text" name="username" required placeholder="ex: pierre" autocomplete="off">
+</div>
+<div class="form-group">
+<label>Mot de passe</label>
+<input type="password" name="password" required placeholder="Minimum 6 caractères" autocomplete="new-password">
+</div>
+<button type="submit">Ajouter l'utilisateur</button>
+</form>
+</div>
+<div class="users-list">
+<h2>👥 Utilisateurs existants (<?=count($users)?>)</h2>
+<?php if(empty($users)):?>
+<div class="empty-state"><p>Aucun utilisateur trouvé</p><p style="font-size:12px;margin-top:10px;color:#aaa">Ajoutez votre premier utilisateur ci-dessus</p></div>
+<?php else:?>
+<?php foreach($users as $user):?>
+<div class="user-item">
+<span class="user-name">👤 <?=htmlspecialchars($user)?></span>
+<form method="POST" style="display:inline" onsubmit="return confirm('Supprimer <?=htmlspecialchars($user)?> ?')">
+<input type="hidden" name="action" value="delete">
+<input type="hidden" name="username" value="<?=htmlspecialchars($user)?>">
+<button type="submit" class="delete">Supprimer</button>
+</form>
+</div>
+<?php endforeach;?>
+<?php endif;?>
+</div>
+</div>
+<div class="footer">© 2025 Nbility - Bolt.DIY Intranet Edition v5.1</div>
+</div>
 </body>
 </html>
