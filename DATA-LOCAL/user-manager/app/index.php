@@ -44,8 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (in_array($username, $existing_users)) {
                     $error = "L'utilisateur '$username' existe déjà";
                 } else {
-                    // Ajouter la nouvelle ligne
-                    $result = file_put_contents($htpasswd_file, $output, FILE_APPEND | LOCK_EX);
+                    // Ajouter la nouvelle ligne avec un retour à la ligne
+                    $result = file_put_contents($htpasswd_file, $output . "\n", FILE_APPEND | LOCK_EX);
                     
                     if ($result !== false) {
                         // Vérifier les permissions
