@@ -18,9 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($action === 'add' && $username && $password) {
         // Vérifier que htpasswd est disponible
-        $htpasswd_exists = shell_exec('which htpasswd 2>&1');
+        $htpasswd_check = trim(shell_exec('which htpasswd 2>&1'));
         
-        if ($htpasswd_exists) {
+        if ($htpasswd_check) {
             // Utiliser htpasswd avec algorithme bcrypt
             $cmd = sprintf(
                 'htpasswd -nbB %s %s 2>&1',
@@ -28,14 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 escapeshellarg($password)
             );
             $output = shell_exec($cmd);
+            $output = trim($output); // CRITIQUE: trim pour enlever \n de htpasswd
             
             if ($output && strpos($output, ':') !== false) {
                 // Vérifier que l'utilisateur n'existe pas déjà
                 $existing_users = [];
-                if (file_exists($htpasswd_file)) {
+                if (file_exists($htpasswd_file) && filesize($htpasswd_file) > 0) {
                     $lines = file($htpasswd_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
                     foreach ($lines as $line) {
-                        if (strpos($line, ':') !== false) {
+                        $line = trim($line);
+                        if ($line && strpos($line, ':') !== false) {
                             $existing_users[] = explode(':', $line)[0];
                         }
                     }
@@ -44,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (in_array($username, $existing_users)) {
                     $error = "L'utilisateur '$username' existe déjà";
                 } else {
-                    // Ajouter la nouvelle ligne avec un retour à la ligne
+                    // Ajouter la nouvelle ligne avec UN SEUL retour à la ligne
                     $result = file_put_contents($htpasswd_file, $output . "\n", FILE_APPEND | LOCK_EX);
                     
                     if ($result !== false) {
@@ -52,14 +54,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         chmod($htpasswd_file, 0666);
                         $message = "Utilisateur '$username' ajouté avec succès";
                     } else {
-                        $error = "Impossible d'écrire dans le fichier .htpasswd (permissions?)";
+                        $error = "Impossible d'écrire dans le fichier .htpasswd";
                     }
                 }
             } else {
                 $error = "Erreur lors de la génération du hash : " . htmlspecialchars($output);
             }
         } else {
-            $error = "La commande htpasswd n'est pas disponible. Installation en cours...";
+            $error = "La commande htpasswd n'est pas disponible";
         }
         
     } elseif ($action === 'delete' && $username) {
@@ -67,14 +69,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = "Fichier .htpasswd introuvable";
         } else {
             $lines = file($htpasswd_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            $new_lines = array_filter($lines, function($line) use ($username) {
-                if (strpos($line, ':') === false) return true;
-                return explode(':', $line)[0] !== $username;
-            });
+            $new_lines = [];
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if ($line && strpos($line, ':') !== false) {
+                    $user = explode(':', $line)[0];
+                    if ($user !== $username) {
+                        $new_lines[] = $line;
+                    }
+                }
+            }
             
-            $result = file_put_contents($htpasswd_file, implode(PHP_EOL, $new_lines) . PHP_EOL, LOCK_EX);
+            $result = file_put_contents($htpasswd_file, implode("\n", $new_lines) . "\n", LOCK_EX);
             
             if ($result !== false) {
+                chmod($htpasswd_file, 0666);
                 $message = "Utilisateur '$username' supprimé";
             } else {
                 $error = "Impossible de supprimer l'utilisateur";
@@ -85,16 +94,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Lire la liste des utilisateurs
 $users = [];
-if (file_exists($htpasswd_file)) {
-    clearstatcache(true, $htpasswd_file); // Forcer le rafraîchissement du cache
+if (file_exists($htpasswd_file) && filesize($htpasswd_file) > 0) {
+    clearstatcache(true, $htpasswd_file);
     
     $lines = file($htpasswd_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        if (strpos($line, ':') !== false) {
+        $line = trim($line);
+        if ($line && strpos($line, ':') !== false) {
             $parts = explode(':', $line, 2);
-            $users[] = $parts[0];
+            if (!empty($parts[0])) {
+                $users[] = trim($parts[0]);
+            }
         }
     }
+    
+    // Enlever les doublons et trier
+    $users = array_unique($users);
+    sort($users);
 }
 ?>
 <!DOCTYPE html>
@@ -135,6 +151,7 @@ if (file_exists($htpasswd_file)) {
             background: #d4edda; 
             color: #155724; 
             border: 1px solid #c3e6cb; 
+            font-weight: 600;
         }
         .error { 
             padding: 15px; 
@@ -143,6 +160,7 @@ if (file_exists($htpasswd_file)) {
             background: #f8d7da; 
             color: #721c24; 
             border: 1px solid #f5c6cb; 
+            font-weight: 600;
         }
         .form-section { 
             background: #f8f9fa; 
@@ -252,11 +270,11 @@ if (file_exists($htpasswd_file)) {
                     <input type="hidden" name="action" value="add">
                     <div class="form-group">
                         <label>Nom d'utilisateur</label>
-                        <input type="text" name="username" required placeholder="ex: pierre">
+                        <input type="text" name="username" required placeholder="ex: pierre" autocomplete="off">
                     </div>
                     <div class="form-group">
                         <label>Mot de passe</label>
-                        <input type="password" name="password" required placeholder="Minimum 6 caractères">
+                        <input type="password" name="password" required placeholder="Minimum 6 caractères" autocomplete="new-password">
                     </div>
                     <button type="submit">Ajouter l'utilisateur</button>
                 </form>
