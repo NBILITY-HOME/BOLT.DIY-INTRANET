@@ -1,0 +1,37 @@
+# Environment
+.env
+
+# User Manager data
+DATA-LOCAL/user-manager/uploads/*
+!DATA-LOCAL/user-manager/uploads/.gitkeep
+DATA-LOCAL/user-manager/backups/*
+!DATA-LOCAL/user-manager/backups/.gitkeep
+DATA-LOCAL/user-manager/app/vendor/
+DATA-LOCAL/user-manager/app/composer.lock
+
+# MariaDB data
+DATA-LOCAL/mariadb/data/
+
+# Nginx
+DATA-LOCAL/nginx/.htpasswd
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
