@@ -46,23 +46,62 @@ services:
     networks:
       - bolt-network-app
 
+  bolt-mariadb:
+    image: mariadb:10.11
+    container_name: bolt-mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MYSQL_DATABASE: bolt_user_manager
+      MYSQL_USER: ${MARIADB_USER}
+      MYSQL_PASSWORD: ${MARIADB_PASSWORD}
+    volumes:
+      - bolt-mariadb-data:/var/lib/mysql
+      - ./DATA-LOCAL/mariadb/init:/docker-entrypoint-initdb.d
+    ports:
+      - "${MARIADB_PORT:-3306}:3306"
+    networks:
+      - bolt-network-app
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
   bolt-user-manager:
     image: php:8.2-apache
     container_name: bolt-user-manager
     restart: always
+    depends_on:
+      - bolt-mariadb
     volumes:
       - ./DATA-LOCAL/user-manager/app:/var/www/html
       - ${HTPASSWD_FILE}:/var/www/html/.htpasswd:rw
+      - ./DATA-LOCAL/user-manager/uploads:/var/www/html/uploads
+      - ./DATA-LOCAL/user-manager/backups:/var/www/html/backups
     environment:
+      DB_HOST: bolt-mariadb
+      DB_PORT: 3306
+      DB_NAME: bolt_user_manager
+      DB_USER: ${MARIADB_USER}
+      DB_PASSWORD: ${MARIADB_PASSWORD}
       HTPASSWD_FILE: /var/www/html/.htpasswd
+      APP_SECRET: ${APP_SECRET}
+      APP_ENV: production
     ports:
       - "${HOST_PORT_UM}:80"
     networks:
       - bolt-network-app
     command: >
-      bash -c "apt-get update && apt-get install -y apache2-utils && 
-      chown www-data:www-data /var/www/html/.htpasswd && 
-      apache2-foreground"
+      bash -c "
+      apt-get update && 
+      apt-get install -y apache2-utils libpng-dev libjpeg-dev libfreetype6-dev zip unzip git && 
+      docker-php-ext-configure gd --with-freetype --with-jpeg && 
+      docker-php-ext-install pdo pdo_mysql gd && 
+      curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && 
+      cd /var/www/html && 
+      if [ -f composer.json ]; then composer install --no-dev --optimize-autoloader; fi && 
+      chown -R www-data:www-data /var/www/html && 
+      chmod 664 /var/www/html/.htpasswd && 
+      a2enmod rewrite && 
+      apache2-foreground
+      "
 
 networks:
   bolt-network-app:
@@ -71,3 +110,5 @@ networks:
 volumes:
   bolt-nbility-data:
     external: true
+  bolt-mariadb-data:
+    driver: local
