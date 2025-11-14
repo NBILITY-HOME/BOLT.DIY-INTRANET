@@ -1,0 +1,142 @@
+
+# ═══════════════════════════════════════════════════════════════════════════
+# FONCTION: Génération du docker-compose.yml
+# ═══════════════════════════════════════════════════════════════════════════
+generate_docker_compose() {
+    print_section "GÉNÉRATION DU DOCKER-COMPOSE.YML"
+
+    print_step "Création de docker-compose.yml..."
+
+    cat > "$INSTALL_DIR/docker-compose.yml" << 'DOCKER_COMPOSE_EOF'
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: bolt-nginx
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT_BOLT}:8585"
+      - "${HOST_PORT_HOME}:8686"
+      - "${HOST_PORT_UM}:8687"
+    volumes:
+      - ./DATA-LOCAL/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./DATA-LOCAL/nginx/.htpasswd:/etc/nginx/.htpasswd:ro
+      - ./DATA-LOCAL/templates:/usr/share/nginx/html:ro
+    networks:
+      - bolt-network-app
+    depends_on:
+      - bolt-core
+      - bolt-user-manager
+
+  bolt-core:
+    build:
+      context: ./bolt.diy
+      dockerfile: Dockerfile
+    container_name: bolt-core
+    restart: unless-stopped
+    expose:
+      - "5173"
+    environment:
+      - BASE_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
+      - APP_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
+      - VITE_BASE_URL=/
+      - PUBLIC_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
+      - BASE_PATH=/
+      - VITE_ROUTER_BASE=/
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - HF_API_KEY=${HF_API_KEY:-}
+    volumes:
+      - bolt-nbility-data:/app/data
+      - ./bolt.diy:/app:cached
+    networks:
+      - bolt-network-app
+
+  bolt-home:
+    image: nginx:alpine
+    container_name: bolt-home
+    restart: unless-stopped
+    expose:
+      - "80"
+    volumes:
+      - ./DATA-LOCAL/templates/home.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      - bolt-network-app
+
+  bolt-user-manager:
+    build:
+      context: ./DATA-LOCAL/user-manager
+      dockerfile: Dockerfile
+    container_name: bolt-user-manager
+    restart: unless-stopped
+    expose:
+      - "80"
+    environment:
+      - DB_HOST=bolt-mariadb
+      - DB_PORT=3306
+      - DB_NAME=bolt_usermanager
+      - DB_USER=bolt_um
+      - DB_PASSWORD=${MARIADB_PASSWORD}
+      - APP_SECRET=${APP_SECRET}
+      - APP_URL=http://${LOCAL_IP}:${HOST_PORT_UM}
+      - PHP_MEMORY_LIMIT=256M
+      - PHP_UPLOAD_MAX_FILESIZE=20M
+      - PHP_POST_MAX_SIZE=20M
+    volumes:
+      - ./DATA-LOCAL/user-manager/app:/var/www/html:cached
+    networks:
+      - bolt-network-app
+    depends_on:
+      bolt-mariadb:
+        condition: service_healthy
+
+  bolt-mariadb:
+    image: mariadb:10.11
+    container_name: bolt-mariadb
+    restart: unless-stopped
+    expose:
+      - "3306"
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=bolt_usermanager
+      - MARIADB_USER=bolt_um
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
+      - MARIADB_AUTO_UPGRADE=1
+    volumes:
+      - mariadb-data:/var/lib/mysql
+      - ./DATA-LOCAL/mariadb/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - bolt-network-app
+    command: 
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max-connections=200
+      - --innodb-buffer-pool-size=256M
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  bolt-network-app:
+    name: bolt-network-app
+    driver: bridge
+
+volumes:
+  bolt-nbility-data:
+    name: bolt-nbility-data
+    driver: local
+  mariadb-data:
+    name: mariadb-data
+    driver: local
+DOCKER_COMPOSE_EOF
+
+    print_success "docker-compose.yml créé"
+    echo ""
+}

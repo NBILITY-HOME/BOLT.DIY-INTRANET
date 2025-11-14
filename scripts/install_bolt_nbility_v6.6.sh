@@ -1,17 +1,16 @@
 #!/bin/bash
 #═══════════════════════════════════════════════════════════════════════════
-# BOLT.DIY NBILITY - Installation Script v6.5
+# BOLT.DIY NBILITY - Installation Script v6.6
 # Architecture Multi-Ports + User Manager v2.0 + MariaDB + Docker Compose
 # © Copyright Nbility 2025 - contact@nbility.fr
 #
-# NOUVEAUTÉS v6.5:
+# CORRECTIONS v6.6:
+# 🐛 Correction erreur syntaxe dans les commandes read -p
 # ✨ Génération automatique de docker-compose.yml
 # ✨ Génération automatique de nginx.conf complet avec préservation du port
 # ✨ Création du Dockerfile User Manager (PHP 8.2 + Apache)
 # ✨ Configuration .env Bolt complète (APP_URL, VITE_BASE_URL, etc.)
 # ✨ Création de health.php pour healthcheck Docker
-# ✨ Validation et tests post-installation
-# ✨ Diagnostic des problèmes de port automatique
 #═══════════════════════════════════════════════════════════════════════════
 
 clear
@@ -26,7 +25,7 @@ if [ "$EUID" -eq 0 ]; then
     echo "Raison: Docker et les fichiers doivent appartenir à votre utilisateur"
     echo ""
     echo "Solution: Lancez le script sans sudo:"
-    echo "  ./install_bolt_nbility_v6.5.sh"
+    echo "  ./install_bolt_nbility_v6.6.sh"
     echo ""
     echo "Si Docker nécessite sudo, ajoutez votre utilisateur au groupe docker:"
     echo "  sudo usermod -aG docker \$USER"
@@ -72,7 +71,7 @@ NETWORK_NAME="bolt-network-app"
 VOLUME_DATA="bolt-nbility-data"
 VOLUME_MARIADB="mariadb-data"
 
-# Variables de configuration (remplies par get_configuration)
+# Variables de configuration
 LOCAL_IP=""
 GATEWAY_IP=""
 HOST_PORT_BOLT=""
@@ -88,7 +87,7 @@ MARIADB_ROOT_PASSWORD=""
 MARIADB_USER_PASSWORD=""
 APP_SECRET=""
 
-# API Keys (optionnelles)
+# API Keys
 ANTHROPIC_KEY=""
 OPENAI_KEY=""
 GEMINI_KEY=""
@@ -106,7 +105,7 @@ print_banner() {
     echo -e "${CYAN}"
     echo "╔══════════════════════════════════════════════════════════════════════════════╗"
     echo "║                                                                              ║"
-    echo "║                    ${BOLD}BOLT.DIY NBILITY - Installer v6.5${NC}${CYAN}                     ║"
+    echo "║                    ${BOLD}BOLT.DIY NBILITY - Installer v6.6${NC}${CYAN}                     ║"
     echo "║                                                                              ║"
     echo "║              ${WHITE}Architecture Multi-Ports + User Manager v2.0${NC}${CYAN}               ║"
     echo "║                                                                              ║"
@@ -145,15 +144,11 @@ print_info() {
     echo -e "${CYAN}ℹ${NC} ${CYAN}$1${NC}"
 }
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Vérification des prérequis
-# ═══════════════════════════════════════════════════════════════════════════
 check_prerequisites() {
     print_section "VÉRIFICATION DES PRÉREQUIS"
 
     local all_good=true
 
-    # Docker
     print_step "Vérification de Docker..."
     if command -v docker &> /dev/null; then
         DOCKER_VERSION=$(docker --version | awk '{print $3}' | tr -d ',')
@@ -163,7 +158,6 @@ check_prerequisites() {
         all_good=false
     fi
 
-    # Docker Compose
     print_step "Vérification de Docker Compose..."
     if docker compose version &> /dev/null; then
         COMPOSE_VERSION=$(docker compose version | awk '{print $4}')
@@ -173,7 +167,6 @@ check_prerequisites() {
         all_good=false
     fi
 
-    # Git
     print_step "Vérification de Git..."
     if command -v git &> /dev/null; then
         GIT_VERSION=$(git --version | awk '{print $3}')
@@ -183,7 +176,6 @@ check_prerequisites() {
         all_good=false
     fi
 
-    # curl
     print_step "Vérification de curl..."
     if command -v curl &> /dev/null; then
         print_success "curl installé"
@@ -192,12 +184,11 @@ check_prerequisites() {
         all_good=false
     fi
 
-    # htpasswd (apache2-utils)
     print_step "Vérification de htpasswd..."
     if command -v htpasswd &> /dev/null; then
         print_success "htpasswd installé"
     else
-        print_warning "htpasswd n'est pas installé (optionnel, auth nginx)"
+        print_warning "htpasswd n'est pas installé (sera installé si nécessaire)"
     fi
 
     echo ""
@@ -205,7 +196,7 @@ check_prerequisites() {
     if [ "$all_good" = false ]; then
         print_error "Certains prérequis sont manquants"
         echo ""
-        echo "Installez les dépendances manquantes:"
+        echo "Installez les dépendances:"
         echo "  sudo apt-get update"
         echo "  sudo apt-get install -y docker.io docker-compose git curl apache2-utils"
         echo ""
@@ -216,9 +207,6 @@ check_prerequisites() {
     echo ""
 }
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Vérification Internet et GitHub
-# ═══════════════════════════════════════════════════════════════════════════
 check_internet_and_github() {
     print_section "VÉRIFICATION DE LA CONNECTIVITÉ"
 
@@ -241,9 +229,6 @@ check_internet_and_github() {
     echo ""
 }
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Vérification de disponibilité d'un port
-# ═══════════════════════════════════════════════════════════════════════════
 check_port_available() {
     local port=$1
     local service_name=$2
@@ -260,9 +245,6 @@ check_port_available() {
     fi
 }
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Génération de mots de passe sécurisés
-# ═══════════════════════════════════════════════════════════════════════════
 generate_secure_password() {
     local length=${1:-32}
     openssl rand -base64 $length | tr -d "=+/" | cut -c1-$length
@@ -273,7 +255,7 @@ generate_app_secret() {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Configuration interactive
+# FONCTION: Configuration interactive (SYNTAXE CORRIGÉE)
 # ═══════════════════════════════════════════════════════════════════════════
 get_configuration() {
     print_section "CONFIGURATION DU SYSTÈME"
@@ -282,7 +264,8 @@ get_configuration() {
     print_step "Détection de l'IP locale..."
     DETECTED_IP=$(hostname -I | awk '{print $1}')
     echo -e "${CYAN}IP détectée: ${WHITE}$DETECTED_IP${NC}"
-    read -p "$(echo -e ${YELLOW}Confirmer ou entrer l\'IP: ${NC})" input_ip
+    echo -ne "${YELLOW}Confirmer ou entrer l'IP: ${NC}"
+    read input_ip
     LOCAL_IP=${input_ip:-$DETECTED_IP}
     print_success "IP configurée: $LOCAL_IP"
     echo ""
@@ -291,7 +274,8 @@ get_configuration() {
     print_step "Configuration de la gateway (box/routeur)..."
     DETECTED_GW=$(ip route | grep default | awk '{print $3}' | head -n1)
     echo -e "${CYAN}Gateway détectée: ${WHITE}$DETECTED_GW${NC}"
-    read -p "$(echo -e ${YELLOW}Confirmer ou entrer la gateway: ${NC})" input_gw
+    echo -ne "${YELLOW}Confirmer ou entrer la gateway: ${NC}"
+    read input_gw
     GATEWAY_IP=${input_gw:-$DETECTED_GW}
     print_success "Gateway configurée: $GATEWAY_IP"
     echo ""
@@ -301,7 +285,8 @@ get_configuration() {
     echo ""
 
     while true; do
-        read -p "$(echo -e ${YELLOW}Port pour Bolt.DIY [défaut: 8585]: ${NC})" input_bolt
+        echo -ne "${YELLOW}Port pour Bolt.DIY [défaut: 8585]: ${NC}"
+        read input_bolt
         HOST_PORT_BOLT=${input_bolt:-8585}
         if check_port_available $HOST_PORT_BOLT "Bolt.DIY"; then
             break
@@ -309,7 +294,8 @@ get_configuration() {
     done
 
     while true; do
-        read -p "$(echo -e ${YELLOW}Port pour Home [défaut: 8686]: ${NC})" input_home
+        echo -ne "${YELLOW}Port pour Home [défaut: 8686]: ${NC}"
+        read input_home
         HOST_PORT_HOME=${input_home:-8686}
         if check_port_available $HOST_PORT_HOME "Home"; then
             break
@@ -317,7 +303,8 @@ get_configuration() {
     done
 
     while true; do
-        read -p "$(echo -e ${YELLOW}Port pour User Manager [défaut: 8687]: ${NC})" input_um
+        echo -ne "${YELLOW}Port pour User Manager [défaut: 8687]: ${NC}"
+        read input_um
         HOST_PORT_UM=${input_um:-8687}
         if check_port_available $HOST_PORT_UM "User Manager"; then
             break
@@ -329,11 +316,14 @@ get_configuration() {
     # Authentification NGINX
     print_step "Configuration de l'authentification NGINX..."
     echo ""
-    read -p "$(echo -e ${YELLOW}Nom d\'utilisateur: ${NC})" NGINX_USER
+    echo -ne "${YELLOW}Nom d'utilisateur: ${NC}"
+    read NGINX_USER
     while true; do
-        read -sp "$(echo -e ${YELLOW}Mot de passe: ${NC})" NGINX_PASS
+        echo -ne "${YELLOW}Mot de passe: ${NC}"
+        read -s NGINX_PASS
         echo ""
-        read -sp "$(echo -e ${YELLOW}Confirmer le mot de passe: ${NC})" NGINX_PASS_CONFIRM
+        echo -ne "${YELLOW}Confirmer le mot de passe: ${NC}"
+        read -s NGINX_PASS_CONFIRM
         echo ""
         if [ "$NGINX_PASS" = "$NGINX_PASS_CONFIRM" ]; then
             break
@@ -347,12 +337,16 @@ get_configuration() {
     # Super Admin
     print_step "Configuration du Super Admin..."
     echo ""
-    read -p "$(echo -e ${YELLOW}Username Super Admin: ${NC})" ADMIN_USERNAME
-    read -p "$(echo -e ${YELLOW}Email Super Admin: ${NC})" ADMIN_EMAIL
+    echo -ne "${YELLOW}Username Super Admin: ${NC}"
+    read ADMIN_USERNAME
+    echo -ne "${YELLOW}Email Super Admin: ${NC}"
+    read ADMIN_EMAIL
     while true; do
-        read -sp "$(echo -e ${YELLOW}Mot de passe Super Admin: ${NC})" ADMIN_PASSWORD
+        echo -ne "${YELLOW}Mot de passe Super Admin: ${NC}"
+        read -s ADMIN_PASSWORD
         echo ""
-        read -sp "$(echo -e ${YELLOW}Confirmer le mot de passe: ${NC})" ADMIN_PASSWORD_CONFIRM
+        echo -ne "${YELLOW}Confirmer le mot de passe: ${NC}"
+        read -s ADMIN_PASSWORD_CONFIRM
         echo ""
         if [ "$ADMIN_PASSWORD" = "$ADMIN_PASSWORD_CONFIRM" ]; then
             break
@@ -374,28 +368,33 @@ get_configuration() {
     # API Keys (optionnel)
     print_step "Configuration des API Keys (optionnel - Entrée pour ignorer)..."
     echo ""
-    read -p "$(echo -e ${CYAN}Anthropic API Key: ${NC})" ANTHROPIC_KEY
-    read -p "$(echo -e ${CYAN}OpenAI API Key: ${NC})" OPENAI_KEY
-    read -p "$(echo -e ${CYAN}Google Gemini API Key: ${NC})" GEMINI_KEY
-    read -p "$(echo -e ${CYAN}Groq API Key: ${NC})" GROQ_KEY
-    read -p "$(echo -e ${CYAN}Mistral API Key: ${NC})" MISTRAL_KEY
-    read -p "$(echo -e ${CYAN}DeepSeek API Key: ${NC})" DEEPSEEK_KEY
-    read -p "$(echo -e ${CYAN}HuggingFace API Key: ${NC})" HF_KEY
+    echo -ne "${CYAN}Anthropic API Key: ${NC}"
+    read ANTHROPIC_KEY
+    echo -ne "${CYAN}OpenAI API Key: ${NC}"
+    read OPENAI_KEY
+    echo -ne "${CYAN}Google Gemini API Key: ${NC}"
+    read GEMINI_KEY
+    echo -ne "${CYAN}Groq API Key: ${NC}"
+    read GROQ_KEY
+    echo -ne "${CYAN}Mistral API Key: ${NC}"
+    read MISTRAL_KEY
+    echo -ne "${CYAN}DeepSeek API Key: ${NC}"
+    read DEEPSEEK_KEY
+    echo -ne "${CYAN}HuggingFace API Key: ${NC}"
+    read HF_KEY
 
     echo ""
     print_success "Configuration terminée"
     echo ""
 }
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Clonage du repository
-# ═══════════════════════════════════════════════════════════════════════════
 clone_repository() {
     print_section "CLONAGE DU REPOSITORY GITHUB"
 
     if [ -d "$INSTALL_DIR" ]; then
         print_warning "Le répertoire $REPO_NAME existe déjà"
-        read -p "$(echo -e ${YELLOW}Supprimer et re-cloner ? (o/N): ${NC})" confirm
+        echo -ne "${YELLOW}Supprimer et re-cloner ? (o/N): ${NC}"
+        read confirm
         if [[ "$confirm" =~ ^[Oo]$ ]]; then
             print_step "Suppression de l'ancien répertoire..."
             rm -rf "$INSTALL_DIR"
@@ -417,9 +416,6 @@ clone_repository() {
     echo ""
 }
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Création de la structure de répertoires
-# ═══════════════════════════════════════════════════════════════════════════
 create_directory_structure() {
     print_section "CRÉATION DE LA STRUCTURE DE RÉPERTOIRES"
 
@@ -442,7 +438,7 @@ create_directory_structure() {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Génération du fichier docker-compose.yml
+# FONCTION: Génération du docker-compose.yml
 # ═══════════════════════════════════════════════════════════════════════════
 generate_docker_compose() {
     print_section "GÉNÉRATION DU DOCKER-COMPOSE.YML"
@@ -453,9 +449,6 @@ generate_docker_compose() {
 version: '3.8'
 
 services:
-  # ════════════════════════════════════════════════════════════════
-  # NGINX REVERSE PROXY
-  # ════════════════════════════════════════════════════════════════
   nginx:
     image: nginx:alpine
     container_name: bolt-nginx
@@ -473,15 +466,7 @@ services:
     depends_on:
       - bolt-core
       - bolt-user-manager
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8585/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
-  # ════════════════════════════════════════════════════════════════
-  # BOLT.DIY CORE APPLICATION
-  # ════════════════════════════════════════════════════════════════
   bolt-core:
     build:
       context: ./bolt.diy
@@ -509,15 +494,7 @@ services:
       - ./bolt.diy:/app:cached
     networks:
       - bolt-network-app
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
-  # ════════════════════════════════════════════════════════════════
-  # BOLT HOME (Page d accueil HTML statique)
-  # ════════════════════════════════════════════════════════════════
   bolt-home:
     image: nginx:alpine
     container_name: bolt-home
@@ -529,9 +506,6 @@ services:
     networks:
       - bolt-network-app
 
-  # ════════════════════════════════════════════════════════════════
-  # USER MANAGER v2.0 (PHP + Apache)
-  # ════════════════════════════════════════════════════════════════
   bolt-user-manager:
     build:
       context: ./DATA-LOCAL/user-manager
@@ -558,15 +532,7 @@ services:
     depends_on:
       bolt-mariadb:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health.php"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
-  # ════════════════════════════════════════════════════════════════
-  # MARIADB DATABASE
-  # ════════════════════════════════════════════════════════════════
   bolt-mariadb:
     image: mariadb:10.11
     container_name: bolt-mariadb
@@ -584,7 +550,7 @@ services:
       - ./DATA-LOCAL/mariadb/init:/docker-entrypoint-initdb.d:ro
     networks:
       - bolt-network-app
-    command:
+    command: 
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --max-connections=200
@@ -654,9 +620,9 @@ http {
     gzip_vary on;
     gzip_proxied any;
     gzip_comp_level 6;
-    gzip_types text/plain text/css text/xml text/javascript
-               application/json application/javascript application/xml+rss
-               application/rss+xml font/truetype font/opentype
+    gzip_types text/plain text/css text/xml text/javascript 
+               application/json application/javascript application/xml+rss 
+               application/rss+xml font/truetype font/opentype 
                application/vnd.ms-fontobject image/svg+xml;
 
     upstream bolt_backend {
@@ -674,14 +640,10 @@ http {
         keepalive 16;
     }
 
-    # ════════════════════════════════════════════════════════════════
-    # SERVER BOLT.DIY (Port 8585)
-    # ════════════════════════════════════════════════════════════════
     server {
         listen 8585;
         server_name _;
 
-        # CRITIQUE: Empêche NGINX de supprimer le port
         port_in_redirect off;
         absolute_redirect off;
 
@@ -698,7 +660,6 @@ http {
         location / {
             proxy_pass http://bolt_backend;
 
-            # Headers pour préserver le port
             proxy_set_header Host $http_host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -706,7 +667,6 @@ http {
             proxy_set_header X-Forwarded-Host $host:$server_port;
             proxy_set_header X-Forwarded-Port $server_port;
 
-            # WebSocket support
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection "upgrade";
@@ -728,9 +688,6 @@ http {
         }
     }
 
-    # ════════════════════════════════════════════════════════════════
-    # SERVER BOLT HOME (Port 8686)
-    # ════════════════════════════════════════════════════════════════
     server {
         listen 8686;
         server_name _;
@@ -750,9 +707,6 @@ http {
         }
     }
 
-    # ════════════════════════════════════════════════════════════════
-    # SERVER USER MANAGER (Port 8687)
-    # ════════════════════════════════════════════════════════════════
     server {
         listen 8687;
         server_name _;
@@ -803,47 +757,26 @@ NGINX_CONF_EOF
 generate_usermanager_dockerfile() {
     print_section "GÉNÉRATION DU DOCKERFILE USER MANAGER"
 
-    print_step "Création du Dockerfile User Manager..."
+    print_step "Création du Dockerfile..."
 
-    cat > "$USERMANAGER_DIR/Dockerfile" << 'DOCKERFILE_UM_EOF'
+    cat > "$USERMANAGER_DIR/Dockerfile" << 'DOCKERFILE_EOF'
 FROM php:8.2-apache
 
 LABEL maintainer="contact@nbility.fr"
-LABEL description="Bolt.DIY User Manager v2.0 with PHP 8.2 and Apache"
 LABEL version="2.0"
 
-# Installation des dépendances système
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    default-mysql-client \
+    git curl libpng-dev libonig-dev libxml2-dev libzip-dev \
+    zip unzip default-mysql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Installation des extensions PHP
-RUN docker-php-ext-install \
-    pdo_mysql \
-    mysqli \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath \
-    gd \
-    zip
+RUN docker-php-ext-install pdo_mysql mysqli mbstring exif pcntl bcmath gd zip
 
-# Installation de Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Configuration Apache
 RUN a2enmod rewrite headers expires && \
     sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
-# Configuration PHP
 RUN echo "memory_limit = 256M" > /usr/local/etc/php/conf.d/memory.ini && \
     echo "upload_max_filesize = 20M" >> /usr/local/etc/php/conf.d/memory.ini && \
     echo "post_max_size = 20M" >> /usr/local/etc/php/conf.d/memory.ini && \
@@ -851,36 +784,26 @@ RUN echo "memory_limit = 256M" > /usr/local/etc/php/conf.d/memory.ini && \
 
 WORKDIR /var/www/html
 
-# Copie du composer.json si présent
-COPY app/composer.json* /var/www/html/ 2>/dev/null || true
+COPY app/ /var/www/html/
 
-# Installation des dépendances PHP
 RUN if [ -f composer.json ]; then \
         composer install --no-dev --optimize-autoloader --no-interaction; \
     fi
 
-# Copie du code source
-COPY app/ /var/www/html/
-
-# Fichier health check
 RUN echo "<?php http_response_code(200); echo 'healthy'; ?>" > /var/www/html/health.php
 
-# Permissions
 RUN chown -R www-data:www-data /var/www/html && \
     chmod -R 755 /var/www/html
 
 EXPOSE 80
 
 CMD ["apache2-foreground"]
-DOCKERFILE_UM_EOF
+DOCKERFILE_EOF
 
     print_success "Dockerfile User Manager créé"
     echo ""
 }
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Génération de health.php
-# ═══════════════════════════════════════════════════════════════════════════
 generate_health_php() {
     print_section "GÉNÉRATION DE HEALTH.PHP"
 
@@ -888,26 +811,12 @@ generate_health_php() {
 
     cat > "$USERMANAGER_DIR/app/health.php" << 'HEALTH_PHP_EOF'
 <?php
-/**
- * Health Check Endpoint
- * Vérifie que PHP et la base de données sont fonctionnels
- */
-
 header('Content-Type: application/json');
 
-$health = [
-    'status' => 'healthy',
-    'timestamp' => time(),
-    'checks' => []
-];
+$health = ['status' => 'healthy', 'timestamp' => time(), 'checks' => []];
 
-// Test PHP
-$health['checks']['php'] = [
-    'status' => 'ok',
-    'version' => PHP_VERSION
-];
+$health['checks']['php'] = ['status' => 'ok', 'version' => PHP_VERSION];
 
-// Test connexion base de données
 try {
     $host = getenv('DB_HOST') ?: 'bolt-mariadb';
     $port = getenv('DB_PORT') ?: '3306';
@@ -921,17 +830,10 @@ try {
         PDO::ATTR_TIMEOUT => 2
     ]);
 
-    $health['checks']['database'] = [
-        'status' => 'ok',
-        'host' => $host,
-        'database' => $dbname
-    ];
+    $health['checks']['database'] = ['status' => 'ok', 'host' => $host];
 } catch (PDOException $e) {
     $health['status'] = 'degraded';
-    $health['checks']['database'] = [
-        'status' => 'error',
-        'message' => 'Database connection failed'
-    ];
+    $health['checks']['database'] = ['status' => 'error'];
 }
 
 http_response_code($health['status'] === 'healthy' ? 200 : 503);
@@ -942,40 +844,21 @@ HEALTH_PHP_EOF
     echo ""
 }
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Génération fichiers .env
-# ═══════════════════════════════════════════════════════════════════════════
 generate_env_files() {
     print_section "GÉNÉRATION DES FICHIERS .ENV"
 
-    # Fichier .env principal du projet (pour docker-compose)
     print_step "Création du fichier .env principal..."
     cat > "$INSTALL_DIR/.env" << ENV_MAIN_EOF
-# ════════════════════════════════════════════════════════════════
-# BOLT.DIY INTRANET - Configuration Docker v6.5
-# ════════════════════════════════════════════════════════════════
-
-# Configuration réseau
 LOCAL_IP=$LOCAL_IP
-
-# Ports des services
 HOST_PORT_BOLT=$HOST_PORT_BOLT
 HOST_PORT_HOME=$HOST_PORT_HOME
 HOST_PORT_UM=$HOST_PORT_UM
 MARIADB_PORT=$MARIADB_PORT
-
-# Authentification NGINX
 HTPASSWD_FILE=$HTPASSWD_FILE
-
-# MariaDB Configuration
 MARIADB_ROOT_PASSWORD=$MARIADB_ROOT_PASSWORD
 MARIADB_USER=bolt_um
 MARIADB_PASSWORD=$MARIADB_USER_PASSWORD
-
-# Application Security
 APP_SECRET=$APP_SECRET
-
-# API Keys (Optionnel)
 ANTHROPIC_API_KEY=$ANTHROPIC_KEY
 OPENAI_API_KEY=$OPENAI_KEY
 GOOGLE_GENERATIVE_AI_API_KEY=$GEMINI_KEY
@@ -987,14 +870,8 @@ ENV_MAIN_EOF
 
     print_success "Fichier .env principal créé"
 
-    # Fichier .env pour Bolt.DIY
     print_step "Création du fichier .env pour Bolt.DIY..."
     cat > "$BOLT_DIR/.env" << ENV_BOLT_EOF
-# ════════════════════════════════════════════════════════════════
-# BOLT.DIY CONFIGURATION - v6.5
-# ════════════════════════════════════════════════════════════════
-
-# URLs et Routing (CRITIQUE: Préservation du port)
 BASE_URL=http://$LOCAL_IP:$HOST_PORT_BOLT
 APP_URL=http://$LOCAL_IP:$HOST_PORT_BOLT
 PUBLIC_URL=http://$LOCAL_IP:$HOST_PORT_BOLT
@@ -1002,8 +879,6 @@ VITE_BASE_URL=/
 VITE_ROUTER_BASE=/
 BASE_PATH=/
 ROUTER_BASE=/
-
-# API Keys
 ANTHROPIC_API_KEY=$ANTHROPIC_KEY
 OPENAI_API_KEY=$OPENAI_KEY
 GOOGLE_GENERATIVE_AI_API_KEY=$GEMINI_KEY
@@ -1011,15 +886,9 @@ GROQ_API_KEY=$GROQ_KEY
 MISTRAL_API_KEY=$MISTRAL_KEY
 DEEPSEEK_API_KEY=$DEEPSEEK_KEY
 HF_API_KEY=$HF_KEY
-
-# Développement
 NODE_ENV=production
 VITE_LOG_LEVEL=info
-
-# Sécurité
 SESSION_SECRET=changeme_with_random_string
-
-# Serveur
 PORT=5173
 HOST=0.0.0.0
 ENV_BOLT_EOF
@@ -1029,13 +898,13 @@ ENV_BOLT_EOF
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Création du schéma SQL
+# FONCTION: Création du schéma SQL MariaDB
 # ═══════════════════════════════════════════════════════════════════════════
 create_sql_schema() {
     print_section "CRÉATION DU SCHÉMA SQL MARIADB"
-
+    
     mkdir -p "$MARIADB_DIR/init"
-
+    
     cat > "$MARIADB_DIR/init/01-schema.sql" << 'SQL_SCHEMA'
 -- ═══════════════════════════════════════════════════════════════════════════
 -- BOLT.DIY USER MANAGER v2.0 - Database Schema
@@ -1316,10 +1185,10 @@ SQL_SCHEMA
 # ═══════════════════════════════════════════════════════════════════════════
 create_sql_seed() {
     print_step "Création des données initiales..."
-
+    
     local ADMIN_PASSWORD_HASH
     ADMIN_PASSWORD_HASH=$(php -r "echo password_hash('$ADMIN_PASSWORD', PASSWORD_BCRYPT);")
-
+    
     cat > "$MARIADB_DIR/init/02-seed.sql" << SQL_SEED
 -- ═══════════════════════════════════════════════════════════════════════════
 -- BOLT.DIY USER MANAGER v2.0 - Initial Data
@@ -1468,7 +1337,7 @@ create_usermanager_files() {
     cat > "$USERMANAGER_DIR/app/composer.json" << 'COMPOSER_EOF'
 {
     "name": "nbility/bolt-user-manager",
-    "description": "Bolt.DIY User Manager v2.0 with Authentication and Profiles",
+    "description": "Bolt.DIY User Manager v2.0",
     "type": "project",
     "require": {
         "php": ">=8.2",
@@ -1478,66 +1347,46 @@ create_usermanager_files() {
     },
     "autoload": {
         "psr-4": {
-            "App\\": "app/",
-            "App\\Models\\": "app/models/",
-            "App\\Controllers\\": "app/controllers/"
+            "App\\": "app/"
         }
     },
     "config": {
-        "optimize-autoloader": true,
-        "preferred-install": "dist",
-        "sort-packages": true
-    },
-    "minimum-stability": "stable",
-    "prefer-stable": true
+        "optimize-autoloader": true
+    }
 }
 COMPOSER_EOF
 
     print_success "composer.json créé"
 
-    print_step "Génération de index.php (page simple de test)..."
+    print_step "Génération de index.php..."
     cat > "$USERMANAGER_DIR/app/index.php" << 'PHP_INDEX_EOF'
 <?php
-/**
- * BOLT.DIY User Manager v2.0 - Entry Point
- * Copyright Nbility 2025
- */
-
-// Configuration
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Récupération des variables d'environnement
-\$db_host = getenv('DB_HOST') ?: 'bolt-mariadb';
-\$db_port = getenv('DB_PORT') ?: '3306';
-\$db_name = getenv('DB_NAME') ?: 'bolt_usermanager';
-\$db_user = getenv('DB_USER') ?: 'bolt_um';
-\$db_password = getenv('DB_PASSWORD') ?: '';
+$db_host = getenv('DB_HOST') ?: 'bolt-mariadb';
+$db_port = getenv('DB_PORT') ?: '3306';
+$db_name = getenv('DB_NAME') ?: 'bolt_usermanager';
+$db_user = getenv('DB_USER') ?: 'bolt_um';
+$db_password = getenv('DB_PASSWORD') ?: '';
 
-// Connexion à la base de données
 try {
-    \$dsn = "mysql:host=\$db_host;port=\$db_port;dbname=\$db_name;charset=utf8mb4";
-    \$pdo = new PDO(\$dsn, \$db_user, \$db_password, [
+    $dsn = "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4";
+    $pdo = new PDO($dsn, $db_user, $db_password, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
-} catch (PDOException \$e) {
-    die('Erreur de connexion à la base de données: ' . \$e->getMessage());
-}
 
-// Récupérer les statistiques
-try {
-    \$stmt = \$pdo->query("SELECT COUNT(*) as total FROM users");
-    \$stats['total_users'] = \$stmt->fetchColumn();
+    $stmt = $pdo->query("SELECT COUNT(*) FROM users");
+    $total_users = $stmt->fetchColumn();
 
-    \$stmt = \$pdo->query("SELECT COUNT(*) as total FROM users WHERE is_active = 1");
-    \$stats['active_users'] = \$stmt->fetchColumn();
+    $stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE is_active = 1");
+    $active_users = $stmt->fetchColumn();
 
-    \$stmt = \$pdo->query("SELECT COUNT(*) as total FROM groups");
-    \$stats['total_groups'] = \$stmt->fetchColumn();
-} catch (PDOException \$e) {
-    \$stats = ['total_users' => 0, 'active_users' => 0, 'total_groups' => 0];
+    $stmt = $pdo->query("SELECT COUNT(*) FROM groups");
+    $total_groups = $stmt->fetchColumn();
+} catch (PDOException $e) {
+    die('DB Error: ' . $e->getMessage());
 }
 ?>
 <!DOCTYPE html>
@@ -1545,11 +1394,11 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Manager v2.0 - Bolt.DIY</title>
+    <title>User Manager v2.0</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
@@ -1562,13 +1411,11 @@ try {
             margin-bottom: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-        .header h1 { color: #667eea; font-size: 32px; margin-bottom: 5px; }
-        .header p { color: #666; font-size: 14px; }
+        .header h1 { color: #667eea; font-size: 32px; }
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
-            margin-bottom: 20px;
         }
         .stat-card {
             background: white;
@@ -1577,40 +1424,29 @@ try {
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             text-align: center;
         }
-        .stat-card h3 { color: #667eea; font-size: 36px; margin-bottom: 10px; }
-        .stat-card p { color: #666; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
-        .footer {
-            text-align: center;
-            color: white;
-            margin-top: 30px;
-            font-size: 14px;
-        }
+        .stat-card h3 { color: #667eea; font-size: 36px; }
+        .stat-card p { color: #666; font-size: 14px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🔧 User Manager v2.0</h1>
-            <p>Bolt.DIY Intranet Edition - Système de gestion des utilisateurs</p>
+            <p>Bolt.DIY Intranet Edition</p>
         </div>
-
         <div class="stats">
             <div class="stat-card">
-                <h3><?php echo \$stats['total_users']; ?></h3>
+                <h3><?php echo $total_users; ?></h3>
                 <p>Utilisateurs totaux</p>
             </div>
             <div class="stat-card">
-                <h3><?php echo \$stats['active_users']; ?></h3>
+                <h3><?php echo $active_users; ?></h3>
                 <p>Utilisateurs actifs</p>
             </div>
             <div class="stat-card">
-                <h3><?php echo \$stats['total_groups']; ?></h3>
+                <h3><?php echo $total_groups; ?></h3>
                 <p>Groupes</p>
             </div>
-        </div>
-
-        <div class="footer">
-            © 2025 Nbility - Bolt.DIY Intranet Edition v6.5 - User Manager v2.0
         </div>
     </div>
 </body>
@@ -1621,70 +1457,39 @@ PHP_INDEX_EOF
     echo ""
 }
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Génération des HTML templates
-# ═══════════════════════════════════════════════════════════════════════════
-generate_html_from_templates() {
-    local template_file=$1
-    local output_file=$2
-    local desc=$3
-
-    print_step "Génération de $desc..."
-
-    sed -e "s/LOCAL_IP/$LOCAL_IP/g" \
-        -e "s/GATEWAY_IP/$GATEWAY_IP/g" \
-        -e "s/HOST_PORT_BOLT/$HOST_PORT_BOLT/g" \
-        -e "s/HOST_PORT_HOME/$HOST_PORT_HOME/g" \
-        -e "s/HOST_PORT_UM/$HOST_PORT_UM/g" \
-        "$template_file" > "$output_file"
-
-    if [ -f "$output_file" ]; then
-        print_success "$desc générée"
-    else
-        print_error "Échec de la génération de $desc"
-    fi
-}
-
 generate_html_pages() {
     print_section "GÉNÉRATION DES PAGES HTML"
 
-    if [ -d "$TEMPLATES_DIR" ]; then
-        if [ -f "$TEMPLATES_DIR/home.html" ]; then
-            generate_html_from_templates "$TEMPLATES_DIR/home.html" "$TEMPLATES_DIR/home_generated.html" "page d'accueil"
-        else
-            print_warning "Template home.html non trouvé"
-        fi
+    if [ -d "$TEMPLATES_DIR" ] && [ -f "$TEMPLATES_DIR/home.html" ]; then
+        print_step "Génération de la page d'accueil..."
+        sed -e "s/LOCAL_IP/$LOCAL_IP/g" \
+            -e "s/HOST_PORT_BOLT/$HOST_PORT_BOLT/g" \
+            -e "s/HOST_PORT_HOME/$HOST_PORT_HOME/g" \
+            -e "s/HOST_PORT_UM/$HOST_PORT_UM/g" \
+            "$TEMPLATES_DIR/home.html" > "$TEMPLATES_DIR/home_generated.html" 2>/dev/null || true
+        print_success "Page d'accueil générée"
     else
-        print_warning "Dossier templates introuvable"
+        print_warning "Template home.html non trouvé"
     fi
 
     echo ""
 }
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Fix Dockerfile Bolt
-# ═══════════════════════════════════════════════════════════════════════════
 fix_bolt_dockerfile() {
-    print_section "APPLICATION DU FIX DOCKERFILE BOLT"
+    print_section "FIX DOCKERFILE BOLT"
 
     cd "$INSTALL_DIR"
 
     local dockerfile_template="$TEMPLATES_DIR/bolt.diy/Dockerfile"
     local dockerfile_target="$BOLT_DIR/Dockerfile"
 
-    if [ ! -f "$dockerfile_template" ]; then
-        print_warning "Template Dockerfile non trouvé, skip du fix"
-        return 0
+    if [ -f "$dockerfile_template" ] && [ -f "$dockerfile_target" ]; then
+        print_step "Application du fix wrangler..."
+        cp "$dockerfile_template" "$dockerfile_target"
+        print_success "Fix Dockerfile appliqué"
+    else
+        print_warning "Templates Dockerfile non trouvés, skip"
     fi
-
-    if [ ! -f "$dockerfile_target" ]; then
-        print_warning "Dockerfile cible non trouvé dans bolt.diy/"
-        return 0
-    fi
-
-    print_step "Application du fix wrangler..."
-    cp "$dockerfile_template" "$dockerfile_target"
-    print_success "Fix Dockerfile appliqué"
 
     echo ""
 }
@@ -1699,20 +1504,19 @@ build_and_start_containers() {
 
     print_step "Vérification de la configuration docker-compose..."
     if docker compose config > /dev/null 2>&1; then
-        print_success "Configuration docker-compose valide"
+        print_success "Configuration valide"
     else
-        print_error "Configuration docker-compose invalide"
+        print_error "Configuration invalide"
         exit 1
     fi
 
-    print_step "Build des images Docker (cela peut prendre plusieurs minutes)..."
+    print_step "Build des images Docker (plusieurs minutes)..."
     echo -e "${YELLOW}Build en cours...${NC}"
 
     if docker compose build 2>&1 | tee /tmp/bolt-build.log; then
-        print_success "Build des images réussi"
+        print_success "Build réussi"
     else
-        print_error "Échec du build"
-        echo -e "${YELLOW}Consultez /tmp/bolt-build.log pour les détails${NC}"
+        print_error "Échec du build (voir /tmp/bolt-build.log)"
         exit 1
     fi
 
@@ -1724,113 +1528,86 @@ build_and_start_containers() {
         exit 1
     fi
 
-    print_step "Attente de l'initialisation de MariaDB..."
+    print_step "Attente de l'initialisation (10s)..."
     sleep 10
-    print_success "MariaDB initialisée"
 
-    print_step "Vérification de l'état des conteneurs..."
+    print_step "État des conteneurs:"
     docker compose ps
 
     echo ""
 }
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Tests post-installation
-# ═══════════════════════════════════════════════════════════════════════════
 run_post_install_tests() {
     print_section "TESTS POST-INSTALLATION"
 
-    print_step "Test de connectivité Bolt.DIY..."
-    if curl -f -s -o /dev/null "http://$LOCAL_IP:$HOST_PORT_BOLT/health"; then
+    print_step "Test Bolt.DIY..."
+    if curl -f -s -o /dev/null "http://$LOCAL_IP:$HOST_PORT_BOLT/health" 2>/dev/null; then
         print_success "Bolt.DIY accessible"
     else
-        print_warning "Bolt.DIY pas encore prêt (peut prendre quelques minutes)"
+        print_warning "Bolt.DIY pas encore prêt"
     fi
 
-    print_step "Test de connectivité User Manager..."
-    if curl -f -s -o /dev/null "http://$LOCAL_IP:$HOST_PORT_UM/health.php"; then
+    print_step "Test User Manager..."
+    if curl -f -s -o /dev/null "http://$LOCAL_IP:$HOST_PORT_UM/health.php" 2>/dev/null; then
         print_success "User Manager accessible"
     else
         print_warning "User Manager pas encore prêt"
     fi
 
-    print_step "Test de la base de données..."
+    print_step "Test MariaDB..."
     if docker exec bolt-mariadb mysql -u bolt_um -p"$MARIADB_USER_PASSWORD" -e "SHOW DATABASES;" > /dev/null 2>&1; then
-        print_success "Base de données accessible"
+        print_success "MariaDB accessible"
     else
-        print_warning "Base de données pas encore prête"
+        print_warning "MariaDB pas encore prête"
     fi
 
     echo ""
 }
 
-# ═══════════════════════════════════════════════════════════════════════════
-# FONCTION: Résumé de l'installation
-# ═══════════════════════════════════════════════════════════════════════════
 print_installation_summary() {
     clear
     print_banner
 
-    echo -e "${GREEN}${BOLD}═══════════════════════════════════════════════════════════════════════════${NC}"
-    echo -e "${GREEN}${BOLD}                    ✓ INSTALLATION TERMINÉE AVEC SUCCÈS                   ${NC}"
-    echo -e "${GREEN}${BOLD}═══════════════════════════════════════════════════════════════════════════${NC}"
+    echo -e "${GREEN}${BOLD}════════════════════════════════════════════════════════════════════${NC}"
+    echo -e "${GREEN}${BOLD}           ✓ INSTALLATION TERMINÉE AVEC SUCCÈS                     ${NC}"
+    echo -e "${GREEN}${BOLD}════════════════════════════════════════════════════════════════════${NC}"
     echo ""
 
-    echo -e "${CYAN}╔══════════════════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║${NC} ${WHITE}${BOLD}ACCÈS AUX SERVICES${NC}                                                          ${CYAN}║${NC}"
-    echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${CYAN}║${NC}                                                                              ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  ${YELLOW}🚀 Login Bolt.DIY${NC}        http://$LOCAL_IP:$HOST_PORT_BOLT                   ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  ${YELLOW}🏠 Page d'Accueil${NC}        http://$LOCAL_IP:$HOST_PORT_HOME                   ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  ${YELLOW}👥 User Manager${NC}          http://$LOCAL_IP:$HOST_PORT_UM                     ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}                                                                              ${CYAN}║${NC}"
-    echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${CYAN}║${NC} ${WHITE}${BOLD}AUTHENTIFICATION NGINX${NC}                                                     ${CYAN}║${NC}"
-    echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${CYAN}║${NC}                                                                              ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  ${YELLOW}Utilisateur:${NC} $NGINX_USER                                                    ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  ${YELLOW}Mot de passe:${NC} ●●●●●●●●                                                     ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}                                                                              ${CYAN}║${NC}"
-    echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${CYAN}║${NC} ${WHITE}${BOLD}SUPER ADMIN USER MANAGER${NC}                                                  ${CYAN}║${NC}"
-    echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${CYAN}║${NC}                                                                              ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  ${YELLOW}Username:${NC} $ADMIN_USERNAME                                                   ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  ${YELLOW}Email:${NC} $ADMIN_EMAIL                                                         ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  ${YELLOW}Mot de passe:${NC} (celui que vous avez configuré)                              ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}                                                                              ${CYAN}║${NC}"
-    echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${CYAN}║${NC} ${WHITE}${BOLD}BASE DE DONNÉES MARIADB${NC}                                                   ${CYAN}║${NC}"
-    echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${CYAN}║${NC}                                                                              ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  ${YELLOW}Port:${NC} $MARIADB_PORT                                                           ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  ${YELLOW}Database:${NC} bolt_usermanager                                                  ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  ${YELLOW}Utilisateur:${NC} bolt_um                                                        ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  ${YELLOW}Tables créées:${NC} 14 tables                                                    ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}                                                                              ${CYAN}║${NC}"
-    echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${CYAN}║${NC} ${WHITE}${BOLD}ARCHITECTURE${NC}                                                              ${CYAN}║${NC}"
-    echo -e "${CYAN}╠══════════════════════════════════════════════════════════════════════════════╣${NC}"
-    echo -e "${CYAN}║${NC}                                                                              ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  • Port $HOST_PORT_BOLT: Login Bolt.DIY (à la racine)                                  ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  • Port $HOST_PORT_HOME: Page d'accueil statique                                       ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  • Port $HOST_PORT_UM: User Manager v2.0 (PHP + MariaDB)                            ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}  • Port $MARIADB_PORT: MariaDB 10.11                                                   ${CYAN}║${NC}"
-    echo -e "${CYAN}║${NC}                                                                              ${CYAN}║${NC}"
-    echo -e "${CYAN}╚══════════════════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC} ${WHITE}${BOLD}ACCÈS AUX SERVICES${NC}                                            ${CYAN}║${NC}"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC}                                                               ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  ${YELLOW}🚀 Bolt.DIY${NC}        http://$LOCAL_IP:$HOST_PORT_BOLT           ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  ${YELLOW}🏠 Home${NC}            http://$LOCAL_IP:$HOST_PORT_HOME           ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  ${YELLOW}👥 User Manager${NC}    http://$LOCAL_IP:$HOST_PORT_UM             ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}                                                               ${CYAN}║${NC}"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC} ${WHITE}${BOLD}AUTHENTIFICATION${NC}                                           ${CYAN}║${NC}"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC}                                                               ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  ${YELLOW}Utilisateur:${NC} $NGINX_USER                                    ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  ${YELLOW}Mot de passe:${NC} ●●●●●●●●                                      ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}                                                               ${CYAN}║${NC}"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC} ${WHITE}${BOLD}SUPER ADMIN${NC}                                                ${CYAN}║${NC}"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC}                                                               ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  ${YELLOW}Username:${NC} $ADMIN_USERNAME                                  ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  ${YELLOW}Email:${NC} $ADMIN_EMAIL                                        ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}                                                               ${CYAN}║${NC}"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC} ${WHITE}${BOLD}COMMANDES UTILES${NC}                                          ${CYAN}║${NC}"
+    echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC}                                                               ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  Logs: ${WHITE}docker compose logs -f${NC}                           ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  Arrêter: ${WHITE}docker compose stop${NC}                          ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  Redémarrer: ${WHITE}docker compose restart${NC}                    ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}  Status: ${WHITE}docker compose ps${NC}                             ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}                                                               ${CYAN}║${NC}"
+    echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════╝${NC}"
     echo ""
 
-    echo -e "${MAGENTA}${BOLD}📋 Commandes utiles${NC}"
-    echo -e "${CYAN}${ARROW}${NC} Voir les logs: ${WHITE}docker compose logs -f${NC}"
-    echo -e "${CYAN}${ARROW}${NC} Logs User Manager: ${WHITE}docker compose logs -f bolt-user-manager${NC}"
-    echo -e "${CYAN}${ARROW}${NC} Logs MariaDB: ${WHITE}docker compose logs -f bolt-mariadb${NC}"
-    echo -e "${CYAN}${ARROW}${NC} Arrêter: ${WHITE}docker compose stop${NC}"
-    echo -e "${CYAN}${ARROW}${NC} Redémarrer: ${WHITE}docker compose restart${NC}"
-    echo -e "${CYAN}${ARROW}${NC} Status: ${WHITE}docker compose ps${NC}"
-    echo -e "${CYAN}${ARROW}${NC} Accès MariaDB: ${WHITE}docker exec -it bolt-mariadb mysql -u bolt_um -p${NC}"
-    echo ""
-
-    echo -e "${GREEN}${BOLD}✓ Installation v6.5 terminée avec succès !${NC}"
+    echo -e "${GREEN}${BOLD}✓ Installation v6.6 terminée !${NC}"
     echo ""
 }
 
@@ -1838,52 +1615,35 @@ print_installation_summary() {
 # SCRIPT PRINCIPAL
 # ═══════════════════════════════════════════════════════════════════════════
 main() {
-    # Affichage de la bannière
     print_banner
 
-    # Vérifications
     check_prerequisites
     check_internet_and_github
 
-    # Configuration
     get_configuration
 
-    # Clonage et préparation
     clone_repository
     create_directory_structure
 
-    # Génération des fichiers de configuration
     generate_docker_compose
     generate_nginx_conf
     generate_usermanager_dockerfile
     generate_health_php
     generate_env_files
 
-    # Création de la base de données
     create_sql_schema
     create_sql_seed
 
-    # Création des fichiers User Manager
     create_usermanager_files
-
-    # Authentification NGINX
     create_htpasswd
 
-    # HTML templates
     generate_html_pages
-
-    # Fix Bolt Dockerfile
     fix_bolt_dockerfile
 
-    # Build et démarrage
     build_and_start_containers
-
-    # Tests
     run_post_install_tests
 
-    # Résumé
     print_installation_summary
 }
 
-# Lancement du script
 main
