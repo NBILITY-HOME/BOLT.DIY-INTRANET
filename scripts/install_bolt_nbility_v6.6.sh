@@ -640,6 +640,9 @@ http {
         keepalive 16;
     }
 
+    # ════════════════════════════════════════════════════════════════
+    # SERVER BOLT.DIY (Port 8585) - AVEC AUTHENTIFICATION
+    # ════════════════════════════════════════════════════════════════
     server {
         listen 8585;
         server_name _;
@@ -688,6 +691,9 @@ http {
         }
     }
 
+    # ════════════════════════════════════════════════════════════════
+    # SERVER BOLT HOME (Port 8686) - SANS AUTHENTIFICATION (PUBLIC)
+    # ════════════════════════════════════════════════════════════════
     server {
         listen 8686;
         server_name _;
@@ -695,8 +701,7 @@ http {
         port_in_redirect off;
         absolute_redirect off;
 
-        auth_basic "Bolt.DIY Home - Accès Restreint";
-        auth_basic_user_file /etc/nginx/.htpasswd;
+        # PAS D'AUTHENTIFICATION - Page publique d'accueil
 
         location / {
             proxy_pass http://home_backend;
@@ -707,6 +712,9 @@ http {
         }
     }
 
+    # ════════════════════════════════════════════════════════════════
+    # SERVER USER MANAGER (Port 8687) - AVEC AUTHENTIFICATION
+    # ════════════════════════════════════════════════════════════════
     server {
         listen 8687;
         server_name _;
