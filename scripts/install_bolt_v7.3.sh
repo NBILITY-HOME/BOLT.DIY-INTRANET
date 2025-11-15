@@ -264,8 +264,8 @@ collect_user_inputs() {
         echo ""
     done
 
-    # Hash du mot de passe admin
-    ADMIN_PASSWORD_HASH=$(php -r "echo password_hash('$ADMIN_PASSWORD', PASSWORD_BCRYPT);")
+    # Hash du mot de passe admin (APR1 - compatible avec htpasswd)
+    ADMIN_PASSWORD_HASH=$(openssl passwd -apr1 "$ADMIN_PASSWORD")
 
     # Mots de passe base de données
     MARIADB_ROOT_PASSWORD=$(openssl rand -base64 32)
@@ -382,11 +382,11 @@ verify_cloned_content() {
     fi
 
     # Vérifier index.html (PAS home.html)
-    if [ -f "$NGINX_DIR/index.html" ]; then
+    if [ -f "$NGINX_DIR/html/index.html" ]; then
         print_success "Fichier index.html présent"
     else
         print_error "Fichier index.html manquant dans le repository GitHub"
-        print_error "Le repository doit contenir: DATA-LOCAL/nginx/index.html"
+        print_error "Le repository doit contenir: DATA-LOCAL/nginx/html/index.html"
         critical_ok=false
     fi
 
@@ -1106,7 +1106,7 @@ final_verification() {
         "$PROJECT_ROOT/.env"
         "$NGINX_DIR/nginx.conf"
         "$NGINX_DIR/.htpasswd"
-        "$NGINX_DIR/index.html"
+        "$NGINX_DIR/html/index.html"
         "$BOLTDIY_DIR/.env"
         "$USERMANAGER_DIR/.env"
         "$USERMANAGER_DIR/Dockerfile"

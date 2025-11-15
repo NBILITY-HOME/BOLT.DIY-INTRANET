@@ -35,16 +35,6 @@
             "Tests\\": "tests/"
         }
     },
-    "scripts": {
-        "test": "phpunit",
-        "post-install-cmd": [
-            "@php -r \"echo '\\n✅ User Manager v2.0 installed successfully!\\n\\n\';\"",
-            "@php -r \"echo 'Run: php -S localhost:8000 -t app/public\\n\\n\';\""
-        ],
-        "post-update-cmd": [
-            "@php -r \"echo '\\n✅ User Manager v2.0 updated successfully!\\n\\n\';\""
-        ]
-    },
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
