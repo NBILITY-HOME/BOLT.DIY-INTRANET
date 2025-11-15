@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- BOLT.DIY USER MANAGER v2.0 - Database Schema v6.7
+-- BOLT.DIY USER MANAGER v2.0 - Database Schema v6.7 FINAL
 -- MariaDB 10.6+
 -- © Copyright Nbility 2025 - contact@nbility.fr
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -222,5 +222,5 @@ CREATE TABLE IF NOT EXISTS `um_themes` (
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- Fin du schéma v6.7
+-- Fin du schéma v6.7 FINAL
 -- ═══════════════════════════════════════════════════════════════════════════

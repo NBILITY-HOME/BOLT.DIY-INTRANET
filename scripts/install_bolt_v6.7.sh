@@ -436,18 +436,24 @@ services:
     networks:
       - bolt-network-app
     depends_on:
-      - bolt-core
-      - bolt-user-manager
+      bolt-core:
+        condition: service_started
+      bolt-home:
+        condition: service_started
+      bolt-user-manager:
+        condition: service_started
 
   bolt-core:
     build:
       context: ./bolt.diy
       dockerfile: Dockerfile
+      target: bolt-ai-production
     container_name: bolt-core
     restart: unless-stopped
     expose:
       - "5173"
     environment:
+      - NODE_ENV=production
       - BASE_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
       - APP_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
       - VITE_BASE_URL=/
@@ -463,9 +469,14 @@ services:
       - HF_API_KEY=${HF_API_KEY:-}
     volumes:
       - bolt-nbility-data:/app/data
-      - ./bolt.diy:/app:cached
     networks:
       - bolt-network-app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   bolt-home:
     image: nginx:alpine
@@ -984,7 +995,7 @@ SQL_SCHEMA_EOF
 
     HASHED_PASSWORD=$(php -r "echo password_hash('$ADMIN_PASSWORD', PASSWORD_BCRYPT);")
 
-cat > "$MARIADB_DIR/init/02_seed.sql" << SQL_SEED_EOF
+    cat > "$MARIADB_DIR/init/02_seed.sql" << SQL_SEED_EOF
 USE bolt_usermanager;
 
 -- 1. CRÉER L'UTILISATEUR EN PREMIER (important pour les FK)
@@ -994,6 +1005,7 @@ ON DUPLICATE KEY UPDATE email=VALUES(email);
 
 -- 2. PUIS CRÉER LES GROUPES
 INSERT INTO groups (name, description) VALUES
+
 
 INSERT INTO groups (name, description) VALUES 
 ('Administrateurs', 'Groupe des administrateurs système'),

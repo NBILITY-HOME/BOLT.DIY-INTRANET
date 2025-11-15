@@ -1,9 +1,6 @@
 version: '3.8'
 
 services:
-  # ════════════════════════════════════════════════════════════════
-  # NGINX REVERSE PROXY
-  # ════════════════════════════════════════════════════════════════
   nginx:
     image: nginx:alpine
     container_name: bolt-nginx
@@ -25,36 +22,24 @@ services:
         condition: service_started
       bolt-user-manager:
         condition: service_started
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8585/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
-  # ════════════════════════════════════════════════════════════════
-  # BOLT.DIY CORE APPLICATION
-  # ════════════════════════════════════════════════════════════════
   bolt-core:
     build:
       context: ./bolt.diy
       dockerfile: Dockerfile
-      target: development
+      target: bolt-ai-production
     container_name: bolt-core
     restart: unless-stopped
     expose:
       - "5173"
     environment:
-      # URLs avec port préservé
+      - NODE_ENV=production
       - BASE_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
       - APP_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
       - VITE_BASE_URL=/
       - PUBLIC_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
-
-      # Routing
       - BASE_PATH=/
       - VITE_ROUTER_BASE=/
-
-      # API Keys (depuis .env principal)
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY:-}
@@ -64,18 +49,15 @@ services:
       - HF_API_KEY=${HF_API_KEY:-}
     volumes:
       - bolt-nbility-data:/app/data
-      - ./bolt.diy:/app:cached
     networks:
       - bolt-network-app
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: ["CMD", "curl", "-f", "http://localhost:5173/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-  # ════════════════════════════════════════════════════════════════
-  # BOLT HOME (Page d'accueil HTML statique)
-  # ════════════════════════════════════════════════════════════════
   bolt-home:
     image: nginx:alpine
     container_name: bolt-home
@@ -87,9 +69,6 @@ services:
     networks:
       - bolt-network-app
 
-  # ════════════════════════════════════════════════════════════════
-  # USER MANAGER v2.0 (PHP + Apache)
-  # ════════════════════════════════════════════════════════════════
   bolt-user-manager:
     build:
       context: ./DATA-LOCAL/user-manager
@@ -99,18 +78,13 @@ services:
     expose:
       - "80"
     environment:
-      # Base de données
       - DB_HOST=bolt-mariadb
       - DB_PORT=3306
       - DB_NAME=bolt_usermanager
       - DB_USER=bolt_um
       - DB_PASSWORD=${MARIADB_PASSWORD}
-
-      # Sécurité
       - APP_SECRET=${APP_SECRET}
       - APP_URL=http://${LOCAL_IP}:${HOST_PORT_UM}
-
-      # Configuration PHP
       - PHP_MEMORY_LIMIT=256M
       - PHP_UPLOAD_MAX_FILESIZE=20M
       - PHP_POST_MAX_SIZE=20M
@@ -121,15 +95,7 @@ services:
     depends_on:
       bolt-mariadb:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/health.php"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
-  # ════════════════════════════════════════════════════════════════
-  # MARIADB DATABASE
-  # ════════════════════════════════════════════════════════════════
   bolt-mariadb:
     image: mariadb:10.11
     container_name: bolt-mariadb
@@ -147,7 +113,7 @@ services:
       - ./DATA-LOCAL/mariadb/init:/docker-entrypoint-initdb.d:ro
     networks:
       - bolt-network-app
-    command:
+    command: 
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --max-connections=200
@@ -158,17 +124,11 @@ services:
       timeout: 5s
       retries: 5
 
-# ════════════════════════════════════════════════════════════════
-# NETWORKS
-# ════════════════════════════════════════════════════════════════
 networks:
   bolt-network-app:
     name: bolt-network-app
     driver: bridge
 
-# ════════════════════════════════════════════════════════════════
-# VOLUMES
-# ════════════════════════════════════════════════════════════════
 volumes:
   bolt-nbility-data:
     name: bolt-nbility-data

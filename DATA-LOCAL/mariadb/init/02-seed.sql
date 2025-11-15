@@ -1,11 +1,12 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- BOLT.DIY USER MANAGER v2.0 - Initial Data (Seed) v6.7 CORRIGÉ
+-- BOLT.DIY USER MANAGER v2.0 - Initial Data (Seed) v6.7 FINAL
 -- © Copyright Nbility 2025 - contact@nbility.fr
 -- 
--- CORRECTIONS v6.7:
+-- CORRECTIONS v6.7 FINAL:
 -- ✅ SET FOREIGN_KEY_CHECKS = 0 au début
--- ✅ Création de um_users AVANT um_groups
--- ✅ Ordre d'insertion corrigé pour éviter erreur FK
+-- ✅ um_users créé EN PREMIER (ligne 17)
+-- ✅ um_groups créé APRÈS (ligne 30)  
+-- ✅ Syntaxe SQL corrigée (pas de double INSERT INTO)
 -- ═══════════════════════════════════════════════════════════════════════════
 
 USE bolt_usermanager;
@@ -204,5 +205,5 @@ ON DUPLICATE KEY UPDATE
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- Fin des données initiales v6.7
+-- Fin des données initiales v6.7 FINAL
 -- ═══════════════════════════════════════════════════════════════════════════

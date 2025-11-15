@@ -37,12 +37,13 @@ services:
     build:
       context: ./bolt.diy
       dockerfile: Dockerfile
-      target: development
+      target: bolt-ai-production
     container_name: bolt-core
     restart: unless-stopped
     expose:
       - "5173"
     environment:
+      - NODE_ENV=production
       - BASE_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
       - APP_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
       - VITE_BASE_URL=/
@@ -58,9 +59,14 @@ services:
       - HF_API_KEY=${HF_API_KEY:-}
     volumes:
       - bolt-nbility-data:/app/data
-      - ./bolt.diy:/app:cached
     networks:
       - bolt-network-app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5173/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   bolt-home:
     image: nginx:alpine
