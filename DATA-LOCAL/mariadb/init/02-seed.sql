@@ -9,7 +9,7 @@
 -- ✅ Syntaxe SQL corrigée (pas de double INSERT INTO)
 -- ═══════════════════════════════════════════════════════════════════════════
 
-USE bolt_usermanager;
+USE usermanager;
 
 -- Désactiver temporairement les contraintes FK
 SET FOREIGN_KEY_CHECKS = 0;
