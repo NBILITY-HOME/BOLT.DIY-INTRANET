@@ -1,136 +1,111 @@
 services:
+  # =========================================================================
+  # NGINX - Reverse Proxy
+  # =========================================================================
   nginx:
     image: nginx:alpine
     container_name: bolt-nginx
     restart: unless-stopped
     ports:
-      - "${HOST_PORT_BOLT}:8585"
-      - "${HOST_PORT_HOME}:8686"
-      - "${HOST_PORT_UM}:8687"
+      - "${HOST_PORT_HOME}:80"
     volumes:
-      - ./DATA-LOCAL/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./DATA-LOCAL/nginx/.htpasswd:/etc/nginx/.htpasswd:ro
-      - ./DATA-LOCAL/templates:/usr/share/nginx/html:ro
-    networks:
-      - bolt-network-app
+      - ${NGINX_DIR}/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${NGINX_DIR}/html:/usr/share/nginx/html:ro
+      - ${NGINX_DIR}/.htpasswd:/etc/nginx/.htpasswd:ro
     depends_on:
-      bolt-core:
-        condition: service_started
-      bolt-home:
-        condition: service_started
-      bolt-user-manager:
-        condition: service_started
-
-  bolt-core:
-    build:
-      context: ./bolt.diy
-      dockerfile: Dockerfile
-      target: bolt-ai-production
-    container_name: bolt-core
-    restart: unless-stopped
-    expose:
-      - "5173"
-    environment:
-      - NODE_ENV=production
-      - BASE_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
-      - APP_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
-      - VITE_BASE_URL=/
-      - PUBLIC_URL=http://${LOCAL_IP}:${HOST_PORT_BOLT}
-      - BASE_PATH=/
-      - VITE_ROUTER_BASE=/
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY:-}
-      - GROQ_API_KEY=${GROQ_API_KEY:-}
-      - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
-      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
-      - HF_API_KEY=${HF_API_KEY:-}
-    volumes:
-      - bolt-nbility-data:/app/data
+      - bolt
+      - user-manager
     networks:
-      - bolt-network-app
+      - bolt-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  bolt-home:
-    image: nginx:alpine
-    container_name: bolt-home
+  # =========================================================================
+  # BOLT.DIY - Application principale
+  # =========================================================================
+  bolt:
+    image: node:20-slim
+    container_name: bolt-app
     restart: unless-stopped
-    expose:
-      - "80"
+    working_dir: /app
+    command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "${HOST_PORT_BOLT}:5173"
     volumes:
-      - ./DATA-LOCAL/templates/home.html:/usr/share/nginx/html/index.html:ro
+      - ${BOLTDIY_DIR}:/app
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - ${BOLTDIY_DIR}/.env
     networks:
-      - bolt-network-app
+      - bolt-network
+    healthcheck:
+      test: ["CMD", "node", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  bolt-user-manager:
+  # =========================================================================
+  # MARIADB - Base de données
+  # =========================================================================
+  mariadb:
+    image: mariadb:latest
+    container_name: bolt-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: usermanager
+      MARIADB_USER: usermanager
+      MARIADB_PASSWORD: ${MARIADB_USER_PASSWORD}
+    volumes:
+      - ${MARIADB_DIR}/data:/var/lib/mysql
+      - ${MARIADB_DIR}/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - bolt-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =========================================================================
+  # USER MANAGER - Gestion utilisateurs
+  # =========================================================================
+  user-manager:
     build:
-      context: ./DATA-LOCAL/user-manager
+      context: ${USERMANAGER_DIR}
       dockerfile: Dockerfile
     container_name: bolt-user-manager
     restart: unless-stopped
-    expose:
-      - "80"
+    ports:
+      - "${HOST_PORT_UM}:8080"
+    volumes:
+      - ${USERMANAGER_DIR}/app:/var/www/html
     environment:
-      - DB_HOST=bolt-mariadb
-      - DB_PORT=3306
-      - DB_NAME=bolt_usermanager
-      - DB_USER=bolt_um
-      - DB_PASSWORD=${MARIADB_PASSWORD}
-      - APP_SECRET=${APP_SECRET}
-      - APP_URL=http://${LOCAL_IP}:${HOST_PORT_UM}
       - PHP_MEMORY_LIMIT=256M
-      - PHP_UPLOAD_MAX_FILESIZE=20M
-      - PHP_POST_MAX_SIZE=20M
-    volumes:
-      - ./DATA-LOCAL/user-manager/app:/var/www/html:cached
-    networks:
-      - bolt-network-app
+      - PHP_UPLOAD_MAX_FILESIZE=50M
+      - PHP_POST_MAX_SIZE=50M
+    env_file:
+      - ${USERMANAGER_DIR}/.env
     depends_on:
-      bolt-mariadb:
-        condition: service_healthy
-
-  bolt-mariadb:
-    image: mariadb:10.11
-    container_name: bolt-mariadb
-    restart: unless-stopped
-    expose:
-      - "3306"
-    environment:
-      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
-      - MARIADB_DATABASE=bolt_usermanager
-      - MARIADB_USER=bolt_um
-      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
-      - MARIADB_AUTO_UPGRADE=1
-    volumes:
-      - mariadb-data:/var/lib/mysql
-      - ./DATA-LOCAL/mariadb/init:/docker-entrypoint-initdb.d:ro
+      - mariadb
     networks:
-      - bolt-network-app
-    command: 
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-      - --max-connections=200
-      - --innodb-buffer-pool-size=256M
+      - bolt-network
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "php", "-v"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+# =========================================================================
+# NETWORKS
+# =========================================================================
 networks:
-  bolt-network-app:
-    name: bolt-network-app
+  bolt-network:
     driver: bridge
-
-volumes:
-  bolt-nbility-data:
-    name: bolt-nbility-data
-    driver: local
-  mariadb-data:
-    name: mariadb-data
-    driver: local
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
