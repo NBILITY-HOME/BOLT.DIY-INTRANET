@@ -1,37 +1,180 @@
-# Environment
+# =========================================================================
+# BOLT.DIY INTRANET - .gitignore
+# © Copyright Nbility 2025
+# =========================================================================
+
+# ─────────────────────────────────────────────────────────────────────────
+# ENVIRONNEMENT ET SECRETS
+# ─────────────────────────────────────────────────────────────────────────
+# Fichiers de configuration avec secrets
 .env
+*.env
+env.local
+.env.local
+.env.*.local
 
-# User Manager data
-DATA-LOCAL/user-manager/uploads/*
-!DATA-LOCAL/user-manager/uploads/.gitkeep
-DATA-LOCAL/user-manager/backups/*
-!DATA-LOCAL/user-manager/backups/.gitkeep
-DATA-LOCAL/user-manager/app/vendor/
-DATA-LOCAL/user-manager/app/composer.lock
+# Exception: garder les templates
+!.env.example
+!bolt.diy/.env.example
+!DATA-LOCAL/user-manager/.env.example
 
-# MariaDB data
+# Credentials
+.htpasswd
+*.htpasswd
+auth.txt
+credentials.txt
+
+# Clés et certificats
+*.key
+*.pem
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# ─────────────────────────────────────────────────────────────────────────
+# DOCKER
+# ─────────────────────────────────────────────────────────────────────────
+# Override personnalisés
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Volumes Docker
+.docker/
+
+# ─────────────────────────────────────────────────────────────────────────
+# DONNÉES RUNTIME
+# ─────────────────────────────────────────────────────────────────────────
+# Base de données MariaDB
 DATA-LOCAL/mariadb/data/
-
-# Nginx
-DATA-LOCAL/nginx/.htpasswd
+DATA-LOCAL/mariadb/data/*
+*.sql.gz
+*.sql.bak
 
 # Logs
 *.log
 logs/
 *.log.*
+DATA-LOCAL/user-manager/app/logs/
+bolt.diy/logs/
 
-# OS Files
-.DS_Store
-Thumbs.db
+# Uploads et fichiers temporaires
+DATA-LOCAL/user-manager/app/uploads/
+uploads/
+tmp/
+temp/
+*.tmp
 
-# IDE
+# Cache
+cache/
+.cache/
+*.cache
+
+# ─────────────────────────────────────────────────────────────────────────
+# NODE.JS / NPM (bolt.diy)
+# ─────────────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log*
+
+# Build
+dist/
+build/
+.next/
+.nuxt/
+.vuepress/dist/
+.output/
+.vercel/
+
+# ─────────────────────────────────────────────────────────────────────────
+# PHP / COMPOSER (user-manager)
+# ─────────────────────────────────────────────────────────────────────────
+vendor/
+composer.lock
+composer.phar
+phpunit.xml
+.phpunit.result.cache
+
+# ─────────────────────────────────────────────────────────────────────────
+# ÉDITEURS ET IDE
+# ─────────────────────────────────────────────────────────────────────────
+# VSCode
 .vscode/
+*.code-workspace
+
+# JetBrains (PHPStorm, WebStorm, etc.)
 .idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
 *.swp
 *.swo
 *~
 
-# Temporary files
-tmp/
-temp/
-*.tmp
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# ─────────────────────────────────────────────────────────────────────────
+# SYSTÈMES D'EXPLOITATION
+# ─────────────────────────────────────────────────────────────────────────
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*
+
+# ─────────────────────────────────────────────────────────────────────────
+# BACKUP ET ARCHIVES
+# ─────────────────────────────────────────────────────────────────────────
+*.bak
+*.backup
+*.old
+*.orig
+*.save
+*.tar
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# ─────────────────────────────────────────────────────────────────────────
+# TESTS ET COVERAGE
+# ─────────────────────────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+.phpunit.cache/
+phpunit.xml.dist
+
+# ─────────────────────────────────────────────────────────────────────────
+# DIVERS
+# ─────────────────────────────────────────────────────────────────────────
+# Scripts d'installation (générés localement)
+install_bolt_v*.sh.backup
+
+# Documentation générée
+docs/_build/
+site/
