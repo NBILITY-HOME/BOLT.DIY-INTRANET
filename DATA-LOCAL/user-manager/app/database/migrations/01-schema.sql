@@ -4,7 +4,7 @@
 -- Architecture: RBAC (Role-Based Access Control)
 -- ═══════════════════════════════════════════════════════════════════════════
 
-USE bolt_usermanager;
+USE usermanager;
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
