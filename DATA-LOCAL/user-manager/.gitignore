@@ -1,0 +1,64 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# USER MANAGER v2.0 - Git Ignore
+# © Copyright Nbility 2025
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Environment & Configuration
+.env
+.env.local
+.env.production
+*.local
+
+# Dependencies
+/vendor/
+composer.lock
+composer.phar
+
+# Runtime & Cache
+/app/logs/*
+!/app/logs/.gitkeep
+/app/cache/*
+!/app/cache/.gitkeep
+
+# Uploads & Backups
+/uploads/*
+!/uploads/.gitkeep
+/backups/*
+!/backups/.gitkeep
+
+# IDE & Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.phpintel/
+*.swp
+*.swo
+*~
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Testing
+/tests/coverage/
+phpunit.xml
+.phpunit.result.cache
+
+# Build & Temp
+/build/
+/dist/
+*.tmp
+*.temp
+*.bak
+
+# Security
+*.pem
+*.key
+*.crt

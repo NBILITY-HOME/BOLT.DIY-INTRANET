@@ -1,0 +1,236 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# BOLT.DIY NBILITY - Arborescence Complète du Projet v7.0
+# © Copyright Nbility 2025
+# Repository: https://github.com/NBILITY-HOME/BOLT.DIY-INTRANET
+# ══════════════════════════════════════════════════════════════════════════════
+
+BOLT.DIY-INTRANET/
+│
+├── 📄 README.md                          # Documentation principale du projet
+├── 📄 LICENSE                            # Licence MIT
+├── 📄 .gitignore                         # Fichiers exclus de Git
+│
+├── 🔧 SCRIPTS D'INSTALLATION
+│   ├── install_bolt_v7.0_part1.sh       # Header + Fonctions utilitaires (252 lignes)
+│   ├── install_bolt_v7.0_part2.sh       # Configuration + Clone + Vérification (336 lignes)
+│   ├── install_bolt_v7.0_part3.sh       # Docker Compose + Nginx (336 lignes)
+│   ├── install_bolt_v7.0_part4.sh       # Dockerfile + Health + ENV (239 lignes)
+│   ├── install_bolt_v7.0_part5.sh       # Base de données SQL (218 lignes)
+│   ├── install_bolt_v7.0_part6.sh       # Build + Summary (171 lignes)
+│   ├── assemble.sh                      # Script d'assemblage automatique
+│   ├── install_bolt_v7.0.sh             # Script final assemblé (généré automatiquement)
+│   └── README_SCRIPTS.md                # Documentation des scripts
+│
+├── 🐳 DOCKER CONFIGURATION
+│   ├── docker-compose.yml                # Configuration Docker Compose (généré)
+│   └── .env                              # Variables d'environnement principales (généré)
+│
+├── 📁 DATA/                              # Données Bolt.DIY
+│   ├── .env                              # Configuration Bolt.DIY (généré)
+│   └── [workspaces]/                     # Espaces de travail Bolt.DIY (runtime)
+│
+├── 📁 DATA-LOCAL/                        # Données locales Docker
+│   │
+│   ├── 📁 nginx/                         # Configuration Nginx
+│   │   ├── nginx.conf                    # Configuration Nginx (généré ou GitHub)
+│   │   ├── .htpasswd                     # Authentification HTTP Basic (généré)
+│   │   └── home.html                     # Page d'accueil (GitHub ou généré)
+│   │
+│   ├── 📁 mariadb/                       # Configuration MariaDB
+│   │   └── init/                         # Scripts d'initialisation
+│   │       ├── 01-schema.sql             # Schéma de base de données (GitHub ou généré)
+│   │       └── 02-seed.sql               # Données initiales (GitHub ou généré)
+│   │
+│   └── 📁 user-manager/                  # 🎯 USER MANAGER v2.0 (depuis GitHub)
+│       │
+│       ├── 📄 README.md                  # Documentation User Manager
+│       ├── 📄 .env.example               # Exemple de configuration
+│       ├── 📄 .env                       # Configuration (généré lors install)
+│       ├── 📄 .gitignore                 # Fichiers exclus
+│       ├── 📄 composer.json              # Dépendances PHP PSR-4
+│       ├── 📄 Dockerfile                 # Image Docker (généré ou GitHub)
+│       │
+│       ├── 📁 app/                       # Application User Manager
+│       │   │
+│       │   ├── 📁 config/                # ⚙️ CONFIGURATION
+│       │   │   ├── app.php               # Configuration application
+│       │   │   ├── database.php          # Configuration base de données
+│       │   │   └── security.php          # Configuration sécurité
+│       │   │
+│       │   ├── 📁 src/                   # 🎯 CODE SOURCE MVC
+│       │   │   │
+│       │   │   ├── 📁 Controllers/       # Contrôleurs (5 fichiers)
+│       │   │   │   ├── UserController.php
+│       │   │   │   ├── GroupController.php
+│       │   │   │   ├── PermissionController.php
+│       │   │   │   ├── AuditController.php
+│       │   │   │   └── DashboardController.php
+│       │   │   │
+│       │   │   ├── 📁 Models/            # Modèles (4 fichiers)
+│       │   │   │   ├── User.php
+│       │   │   │   ├── Group.php
+│       │   │   │   ├── Permission.php
+│       │   │   │   └── AuditLog.php
+│       │   │   │
+│       │   │   ├── 📁 Middleware/        # Middleware (3 fichiers)
+│       │   │   │   ├── AuthMiddleware.php
+│       │   │   │   ├── CSRFMiddleware.php
+│       │   │   │   └── RateLimitMiddleware.php
+│       │   │   │
+│       │   │   └── 📁 Utils/             # Utilitaires (4 fichiers)
+│       │   │       ├── Database.php
+│       │   │       ├── Security.php
+│       │   │       ├── Logger.php
+│       │   │       └── Validator.php
+│       │   │
+│       │   ├── 📁 public/                # 🌐 FRONTEND PUBLIC
+│       │   │   │
+│       │   │   ├── 📄 index.php          # Point d'entrée API
+│       │   │   ├── 📄 index.html         # Dashboard principal
+│       │   │   ├── 📄 login.html         # Page de connexion
+│       │   │   ├── 📄 users.html         # Gestion utilisateurs
+│       │   │   ├── 📄 groups.html        # Gestion groupes
+│       │   │   ├── 📄 permissions.html   # Gestion permissions
+│       │   │   ├── 📄 audit.html         # Logs d'audit
+│       │   │   ├── 📄 health.php         # Health check endpoint
+│       │   │   ├── 📄 favicon.svg        # Icône du site
+│       │   │   │
+│       │   │   └── 📁 assets/            # Assets statiques
+│       │   │       │
+│       │   │       ├── 📁 css/           # Styles
+│       │   │       │   └── style.css     # Styles principaux
+│       │   │       │
+│       │   │       └── 📁 js/            # JavaScript (9 modules)
+│       │   │           ├── api.js        # Client API REST
+│       │   │           ├── auth.js       # Authentification
+│       │   │           ├── utils.js      # Fonctions utilitaires
+│       │   │           ├── users.js      # Module utilisateurs
+│       │   │           ├── groups.js     # Module groupes
+│       │   │           ├── permissions.js # Module permissions
+│       │   │           ├── audit.js      # Module audit
+│       │   │           ├── dashboard.js  # Module dashboard
+│       │   │           └── login.js      # Module login
+│       │   │
+│       │   ├── 📁 database/              # 🗄️ BASE DE DONNÉES
+│       │   │   └── migrations/           # Migrations SQL
+│       │   │       ├── 01-schema.sql     # Schéma tables
+│       │   │       └── 02-seed.sql       # Données initiales
+│       │   │
+│       │   ├── 📁 scripts/               # 🔧 SCRIPTS MAINTENANCE
+│       │   │   ├── backup.sh             # Script de sauvegarde
+│       │   │   └── maintenance.sh        # Script de maintenance
+│       │   │
+│       │   ├── 📁 logs/                  # 📝 LOGS (runtime, pas dans Git)
+│       │   │   └── app.log               # Logs application
+│       │   │
+│       │   └── 📁 cache/                 # 💾 CACHE (runtime, pas dans Git)
+│       │       └── [cache files]         # Fichiers cache
+│       │
+│       ├── 📁 uploads/                   # 📤 UPLOADS (runtime, pas dans Git)
+│       │   └── [uploaded files]          # Fichiers uploadés
+│       │
+│       └── 📁 backups/                   # 💾 BACKUPS (runtime, pas dans Git)
+│           └── [backup files]            # Sauvegardes
+│
+└── 📁 PROJET-SOURCE/                     # Clone GitHub (temporaire, lors install)
+    └── [clone temporaire du repository]
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 📊 STATISTIQUES DU PROJET
+# ══════════════════════════════════════════════════════════════════════════════
+
+TOTAL FICHIERS USER MANAGER v2.0: 45 fichiers
+├── Configuration:        4 fichiers (.env.example, composer.json, README, .gitignore)
+├── Backend PHP:         20 fichiers (Controllers, Models, Middleware, Utils, Config)
+├── Frontend HTML:        6 fichiers (pages)
+├── Frontend CSS:         1 fichier (style.css)
+├── Frontend JavaScript:  9 fichiers (modules)
+├── Base de données:      2 fichiers (schema + seed)
+├── Scripts:              2 fichiers (backup + maintenance)
+└── Assets:               1 fichier (favicon.svg)
+
+SCRIPTS D'INSTALLATION v7.0: 8 fichiers
+├── Parties modulaires:   6 fichiers (_part1 à _part6)
+├── Assemblage:           1 fichier (assemble.sh)
+└── Documentation:        1 fichier (README_SCRIPTS.md)
+
+TOTAL LIGNES CODE: ~1752 lignes (script assemblé)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 🎯 ARCHITECTURE TECHNIQUE
+# ══════════════════════════════════════════════════════════════════════════════
+
+STACK TECHNIQUE:
+├── Frontend:     HTML5, CSS3, JavaScript (Vanilla JS)
+├── Backend:      PHP 8.1, Architecture MVC
+├── Base de données: MariaDB 10.11
+├── Serveur web:  Apache (dans conteneur)
+├── Proxy:        Nginx (authentification + reverse proxy)
+├── Container:    Docker + Docker Compose
+└── Autoload:     Composer PSR-4
+
+SÉCURITÉ:
+├── Authentification: HTTP Basic (Nginx) + JWT (User Manager)
+├── Protection CSRF:  Tokens CSRF
+├── Rate Limiting:    Protection anti-bruteforce
+├── Sessions:         Stockage sécurisé avec métadonnées
+├── Audit:            Logs complets des actions
+└── Permissions:      RBAC (Role-Based Access Control)
+
+FONCTIONNALITÉS USER MANAGER v2.0:
+├── Gestion utilisateurs (CRUD, roles, status)
+├── Gestion groupes (CRUD, permissions)
+├── Gestion permissions (granulaire par catégorie)
+├── Audit logs (traçabilité complète)
+├── Dashboard (statistiques temps réel)
+├── API REST (endpoints sécurisés)
+└── Interface responsive (mobile-friendly)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 🚀 DÉPLOIEMENT
+# ══════════════════════════════════════════════════════════════════════════════
+
+PRÉREQUIS:
+├── Docker 20.10+
+├── Docker Compose 2.0+
+├── Git 2.30+
+└── 2 GB RAM minimum
+
+INSTALLATION (3 ÉTAPES):
+1. Cloner le repository:
+   git clone https://github.com/NBILITY-HOME/BOLT.DIY-INTRANET.git
+   cd BOLT.DIY-INTRANET
+
+2. Assembler le script:
+   ./assemble.sh
+
+3. Lancer l'installation:
+   ./install_bolt_v7.0.sh
+
+ACCÈS AUX SERVICES:
+├── Page d'accueil:  http://VOTRE_IP:8686 (public)
+├── Bolt.DIY:        http://VOTRE_IP:8080 (authentifié)
+└── User Manager:    http://VOTRE_IP:8787 (authentifié)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 📝 NOTES IMPORTANTES
+# ══════════════════════════════════════════════════════════════════════════════
+
+1. Les fichiers User Manager v2.0 proviennent du repository GitHub
+2. Le script d'installation clone le repo et copie les fichiers nécessaires
+3. Les dossiers runtime (logs/, cache/, uploads/, backups/) sont créés automatiquement
+4. La configuration .env User Manager est générée lors de l'installation
+5. Les dépendances Composer sont installées automatiquement (PSR-4 autoload)
+6. Le script est modulaire (6 parties) pour faciliter la maintenance
+7. Tous les fichiers sont versionnés sauf logs/, cache/, uploads/, backups/
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 🔗 LIENS UTILES
+# ══════════════════════════════════════════════════════════════════════════════
+
+Repository:     https://github.com/NBILITY-HOME/BOLT.DIY-INTRANET
+Documentation:  README.md (racine du projet)
+Support:        contact@nbility.fr
+Licence:        MIT
+
+© 2025 Nbility - Tous droits réservés
