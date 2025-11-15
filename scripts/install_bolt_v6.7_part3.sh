@@ -26,13 +26,18 @@ services:
     networks:
       - bolt-network-app
     depends_on:
-      - bolt-core
-      - bolt-user-manager
+      bolt-core:
+        condition: service_started
+      bolt-home:
+        condition: service_started
+      bolt-user-manager:
+        condition: service_started
 
   bolt-core:
     build:
       context: ./bolt.diy
       dockerfile: Dockerfile
+      target: development
     container_name: bolt-core
     restart: unless-stopped
     expose:

@@ -109,9 +109,14 @@ SQL_SCHEMA_EOF
     cat > "$MARIADB_DIR/init/02_seed.sql" << SQL_SEED_EOF
 USE bolt_usermanager;
 
-INSERT INTO users (username, email, password_hash, first_name, last_name, is_active, is_superadmin) 
+-- 1. CRÉER L'UTILISATEUR EN PREMIER (important pour les FK)
+INSERT INTO users (username, email, password_hash, first_name, last_name, is_active, is_superadmin)
 VALUES ('$ADMIN_USERNAME', '$ADMIN_EMAIL', '$HASHED_PASSWORD', 'Super', 'Admin', 1, 1)
 ON DUPLICATE KEY UPDATE email=VALUES(email);
+
+-- 2. PUIS CRÉER LES GROUPES
+INSERT INTO groups (name, description) VALUES
+
 
 INSERT INTO groups (name, description) VALUES 
 ('Administrateurs', 'Groupe des administrateurs système'),

@@ -1,21 +1,49 @@
 -- ═══════════════════════════════════════════════════════════════════════════
--- BOLT.DIY USER MANAGER v2.0 - Initial Data (Seed)
+-- BOLT.DIY USER MANAGER v2.0 - Initial Data (Seed) v6.7 CORRIGÉ
 -- © Copyright Nbility 2025 - contact@nbility.fr
+-- 
+-- CORRECTIONS v6.7:
+-- ✅ SET FOREIGN_KEY_CHECKS = 0 au début
+-- ✅ Création de um_users AVANT um_groups
+-- ✅ Ordre d'insertion corrigé pour éviter erreur FK
 -- ═══════════════════════════════════════════════════════════════════════════
 
--- Note: Le Super Admin sera créé par le script d'installation
+USE bolt_usermanager;
+
+-- Désactiver temporairement les contraintes FK
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- Groupes par défaut
+-- 1. CRÉER LE SUPER ADMIN EN PREMIER (important pour les FK created_by)
 -- ═══════════════════════════════════════════════════════════════════════════
+
+INSERT INTO `um_users` (`id`, `username`, `email`, `password_hash`, `role`, `status`, `quota_bolt_users`, `theme`, `locale`, `timezone`, `created_at`) 
+VALUES (1, '$ADMIN_USERNAME', '$ADMIN_EMAIL', '$HASHED_PASSWORD', 'superadmin', 'active', 999, 'dark', 'fr_FR', 'Europe/Paris', NOW())
+ON DUPLICATE KEY UPDATE 
+    email = VALUES(email), 
+    password_hash = VALUES(password_hash),
+    role = 'superadmin',
+    status = 'active',
+    quota_bolt_users = 999;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 2. PUIS CRÉER LES GROUPES (qui référencent created_by=1)
+-- ═══════════════════════════════════════════════════════════════════════════
+
 INSERT INTO `um_groups` (`id`, `name`, `description`, `color`, `icon`, `quota_bolt_users`, `created_by`, `created_at`) VALUES
 (1, 'Administrateurs', 'Groupe par défaut pour tous les administrateurs', '#667eea', 'shield', NULL, 1, NOW()),
 (2, 'Utilisateurs', 'Groupe par défaut pour tous les utilisateurs', '#4299e1', 'users', NULL, 1, NOW()),
-(3, 'Invités', 'Groupe avec permissions limitées', '#718096', 'user', 5, 1, NOW());
+(3, 'Invités', 'Groupe avec permissions limitées', '#718096', 'user', 5, 1, NOW())
+ON DUPLICATE KEY UPDATE 
+    description = VALUES(description), 
+    color = VALUES(color),
+    icon = VALUES(icon),
+    quota_bolt_users = VALUES(quota_bolt_users);
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- Paramètres système par défaut
+-- 3. PARAMÈTRES SYSTÈME PAR DÉFAUT
 -- ═══════════════════════════════════════════════════════════════════════════
+
 INSERT INTO `um_settings` (`setting_key`, `setting_value`, `setting_type`) VALUES
 -- Sécurité
 ('session_lifetime', '1800', 'integer'),
@@ -66,11 +94,14 @@ INSERT INTO `um_settings` (`setting_key`, `setting_value`, `setting_type`) VALUE
 ('app_version', '2.0.0', 'string'),
 ('app_timezone', 'Europe/Paris', 'string'),
 ('app_locale', 'fr_FR', 'string'),
-('maintenance_mode', '0', 'boolean');
+('maintenance_mode', '0', 'boolean')
+ON DUPLICATE KEY UPDATE 
+    setting_value = VALUES(setting_value);
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- Thèmes système
+-- 4. THÈMES SYSTÈME
 -- ═══════════════════════════════════════════════════════════════════════════
+
 INSERT INTO `um_themes` (`name`, `display_name`, `is_system`, `is_active`, `config`, `created_by`) VALUES
 ('dark', 'Dark Mode', 1, 1, '{
   "colors": {
@@ -95,7 +126,6 @@ INSERT INTO `um_themes` (`name`, `display_name`, `is_system`, `is_active`, `conf
     "padding": "16px"
   }
 }', 1),
-
 ('light', 'Light Mode', 1, 1, '{
   "colors": {
     "primary": "#667eea",
@@ -119,7 +149,6 @@ INSERT INTO `um_themes` (`name`, `display_name`, `is_system`, `is_active`, `conf
     "padding": "16px"
   }
 }', 1),
-
 ('high-contrast', 'High Contrast', 1, 1, '{
   "colors": {
     "primary": "#000000",
@@ -143,7 +172,6 @@ INSERT INTO `um_themes` (`name`, `display_name`, `is_system`, `is_active`, `conf
     "padding": "20px"
   }
 }', 1),
-
 ('nbility-corporate', 'Nbility Corporate', 1, 1, '{
   "colors": {
     "primary": "#667eea",
@@ -166,8 +194,15 @@ INSERT INTO `um_themes` (`name`, `display_name`, `is_system`, `is_active`, `conf
     "borderRadius": "8px",
     "padding": "16px"
   }
-}', 1);
+}', 1)
+ON DUPLICATE KEY UPDATE 
+    display_name = VALUES(display_name), 
+    config = VALUES(config),
+    is_active = VALUES(is_active);
+
+-- Réactiver les contraintes FK
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- Fin des données initiales
+-- Fin des données initiales v6.7
 -- ═══════════════════════════════════════════════════════════════════════════
