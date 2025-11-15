@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="">
+    <title>User Manager - Groupes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-users-cog"></i> User Manager</h2>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/users" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Utilisateurs</span>
+            </a>
+            <a href="/groups" class="nav-item active">
+                <i class="fas fa-layer-group"></i>
+                <span>Groupes</span>
+            </a>
+            <a href="/permissions" class="nav-item" data-role="admin">
+                <i class="fas fa-shield-alt"></i>
+                <span>Permissions</span>
+            </a>
+            <a href="/audit" class="nav-item" data-role="admin">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Audit</span>
+            </a>
+            <a href="/settings" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>Paramètres</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-details">
+                    <p class="user-name" id="userName">Loading...</p>
+                    <p class="user-role" id="userRole">user</p>
+                </div>
+            </div>
+            <button class="btn-logout" id="btnLogout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Déconnexion</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="btn-icon" id="btnMobileToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Groupes</h1>
+                <span class="badge badge-info" id="groupCount">0</span>
+            </div>
+            <div class="topbar-right">
+                <button class="btn btn-primary" id="btnCreateGroup">
+                    <i class="fas fa-plus"></i>
+                    <span>Nouveau Groupe</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Search & Actions -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="filters-container">
+                        <div class="filter-group flex-grow">
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" placeholder="Rechercher un groupe..." id="searchInput">
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <button class="btn btn-secondary" id="btnRefresh">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Groups Grid -->
+            <div class="groups-grid" id="groupsGrid">
+                <!-- Loading -->
+                <div class="card loading-card">
+                    <div class="card-body text-center">
+                        <div class="loading">
+                            <i class="fas fa-spinner fa-spin"></i> Chargement...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Create/Edit Group -->
+    <div class="modal" id="modalGroup">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3><i class="fas fa-layer-group"></i> <span id="modalGroupTitle">Nouveau Groupe</span></h3>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="formGroup">
+                    <input type="hidden" id="groupId" name="id">
+
+                    <!-- Group Info -->
+                    <div class="form-group">
+                        <label for="formName">Nom du groupe *</label>
+                        <input type="text" id="formName" name="name" required>
+                        <span class="form-error" id="errorName"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="formSlug">Slug *</label>
+                        <input type="text" id="formSlug" name="slug" required>
+                        <span class="form-hint">Identifiant unique (auto-généré depuis le nom)</span>
+                        <span class="form-error" id="errorSlug"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="formDescription">Description</label>
+                        <textarea id="formDescription" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button class="btn btn-primary" id="btnSubmitGroup">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Group Details (View/Manage Members & Permissions) -->
+    <div class="modal" id="modalGroupDetails">
+        <div class="modal-content modal-xl">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-layer-group"></i> 
+                    <span id="groupDetailsName">Groupe</span>
+                </h3>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="info">
+                        <i class="fas fa-info-circle"></i> Informations
+                    </button>
+                    <button class="tab-button" data-tab="members">
+                        <i class="fas fa-users"></i> Membres
+                        <span class="badge" id="membersCount">0</span>
+                    </button>
+                    <button class="tab-button" data-tab="permissions">
+                        <i class="fas fa-shield-alt"></i> Permissions
+                        <span class="badge" id="permissionsCount">0</span>
+                    </button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Info Tab -->
+                    <div class="tab-pane active" data-tab="info">
+                        <div class="group-info" id="groupInfoContent">
+                            <!-- Content will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Members Tab -->
+                    <div class="tab-pane" data-tab="members">
+                        <div class="tab-pane-header">
+                            <h4>Membres du groupe</h4>
+                            <button class="btn btn-sm btn-primary" id="btnAddMembers">
+                                <i class="fas fa-user-plus"></i> Ajouter des membres
+                            </button>
+                        </div>
+                        <div class="members-list" id="membersList">
+                            <!-- Members will be inserted here -->
+                        </div>
+                    </div>
+
+                    <!-- Permissions Tab -->
+                    <div class="tab-pane" data-tab="permissions">
+                        <div class="tab-pane-header">
+                            <h4>Permissions du groupe</h4>
+                            <button class="btn btn-sm btn-primary" id="btnManagePermissions">
+                                <i class="fas fa-shield-alt"></i> Gérer les permissions
+                            </button>
+                        </div>
+                        <div class="permissions-grid" id="permissionsGrid">
+                            <!-- Permissions will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add Members -->
+    <div class="modal" id="modalAddMembers">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Ajouter des membres</h3>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Rechercher des utilisateurs</label>
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Rechercher..." id="searchUsers">
+                    </div>
+                </div>
+                <div class="users-selection" id="usersSelection">
+                    <!-- Checkboxes will be inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button class="btn btn-primary" id="btnConfirmAddMembers">
+                    <i class="fas fa-save"></i> Ajouter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Manage Permissions -->
+    <div class="modal" id="modalManagePermissions">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3><i class="fas fa-shield-alt"></i> Gérer les permissions</h3>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="permissions-manager" id="permissionsManager">
+                    <!-- Permissions by category will be inserted here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button class="btn btn-primary" id="btnSavePermissions">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirm Delete -->
+    <div class="modal" id="modalConfirmDelete">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> Confirmer la suppression</h3>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer ce groupe ?</p>
+                <p class="text-danger"><strong>Cette action est irréversible.</strong></p>
+                <p id="deleteGroupInfo"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button class="btn btn-danger" id="btnConfirmDelete">
+                    <i class="fas fa-trash"></i> Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="/js/api.js"></script>
+    <script src="/js/groups.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

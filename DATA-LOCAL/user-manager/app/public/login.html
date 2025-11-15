@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="">
+    <title>User Manager - Connexion</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="login-page">
+    <!-- Background Animation -->
+    <div class="login-background">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <!-- Login Container -->
+    <div class="login-container">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="login-header">
+                <div class="login-logo">
+                    <i class="fas fa-users-cog"></i>
+                </div>
+                <h1>User Manager</h1>
+                <p>Connectez-vous à votre compte</p>
+            </div>
+
+            <!-- Alerts -->
+            <div class="alert-container" id="alertContainer"></div>
+
+            <!-- Login Form -->
+            <form class="login-form" id="loginForm">
+                <!-- Username -->
+                <div class="form-group">
+                    <label for="username">
+                        <i class="fas fa-user"></i>
+                        Nom d'utilisateur
+                    </label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        name="username" 
+                        placeholder="Entrez votre nom d'utilisateur"
+                        required
+                        autocomplete="username"
+                        autofocus
+                    >
+                    <span class="form-error" id="usernameError"></span>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password">
+                        <i class="fas fa-lock"></i>
+                        Mot de passe
+                    </label>
+                    <div class="password-input">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            placeholder="Entrez votre mot de passe"
+                            required
+                            autocomplete="current-password"
+                        >
+                        <button type="button" class="btn-toggle-password" id="btnTogglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <span class="form-error" id="passwordError"></span>
+                </div>
+
+                <!-- Remember Me & Forgot Password -->
+                <div class="form-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="rememberMe" name="remember_me">
+                        <span>Se souvenir de moi</span>
+                    </label>
+                    <a href="/forgot-password.html" class="link-forgot">
+                        Mot de passe oublié ?
+                    </a>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary btn-login" id="btnLogin">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Se connecter</span>
+                    <div class="btn-loader" id="btnLoader">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                </button>
+
+                <!-- Rate Limit Info -->
+                <div class="rate-limit-info" id="rateLimitInfo" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="rateLimitMessage"></span>
+                </div>
+            </form>
+
+            <!-- Footer -->
+            <div class="login-footer">
+                <p>
+                    Pas encore de compte ? 
+                    <a href="/register.html" class="link-register">S'inscrire</a>
+                </p>
+                <div class="login-meta">
+                    <span>© 2025 Nbility</span>
+                    <span>•</span>
+                    <a href="/privacy.html">Confidentialité</a>
+                    <span>•</span>
+                    <a href="/terms.html">Conditions</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Card (Optional - can be hidden on mobile) -->
+        <div class="login-info-card">
+            <h2><i class="fas fa-shield-alt"></i> Sécurisé & Fiable</h2>
+            <ul class="info-list">
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <strong>Authentification sécurisée</strong>
+                        <p>Protection CSRF et rate limiting</p>
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <strong>Gestion des rôles</strong>
+                        <p>RBAC complet avec permissions</p>
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <strong>Logs d'audit</strong>
+                        <p>Traçabilité complète des actions</p>
+                    </div>
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <strong>Interface moderne</strong>
+                        <p>Design responsive et intuitif</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="/js/api.js"></script>
+    <script src="/js/login.js"></script>
+</body>
+</html>

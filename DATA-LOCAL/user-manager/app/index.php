@@ -1,83 +1,326 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * BOLT.DIY USER MANAGER v2.0 - Router API REST Principal
+ * © Copyright Nbility 2025 - contact@nbility.fr
+ * 
+ * Point d'entrée unique pour toutes les requêtes API
+ * Architecture : RESTful API avec routage simple
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
 
-$db_host = getenv('DB_HOST') ?: 'bolt-mariadb';
-$db_port = getenv('DB_PORT') ?: '3306';
-$db_name = getenv('DB_NAME') ?: 'bolt_usermanager';
-$db_user = getenv('DB_USER') ?: 'bolt_um';
-$db_password = getenv('DB_PASSWORD') ?: '';
+declare(strict_types=1);
+
+// ───────────────────────────────────────────────────────────────────────────
+// CONFIGURATION DE BASE
+// ───────────────────────────────────────────────────────────────────────────
+
+// Désactiver l'affichage des erreurs en production
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+ini_set('error_log', __DIR__ . '/logs/php_errors.log');
+
+// Timezone
+date_default_timezone_set('Europe/Paris');
+
+// Headers de sécurité
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Content-Security-Policy: default-src \'self\'; script-src \'self\' \'unsafe-inline\'; style-src \'self\' \'unsafe-inline\';');
+
+// CORS (à adapter selon vos besoins)
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token');
+header('Access-Control-Max-Age: 3600');
+
+// Gestion des requêtes OPTIONS (preflight)
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// AUTOLOADER PSR-4 SIMPLE
+// ───────────────────────────────────────────────────────────────────────────
+
+spl_autoload_register(function ($class) {
+    // Convertir le namespace en chemin de fichier
+    $prefix = 'App\\';
+    $base_dir = __DIR__ . '/src/';
+
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
+
+    $relative_class = substr($class, $len);
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+    if (file_exists($file)) {
+        require $file;
+    }
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// CHARGEMENT DES CONFIGURATIONS
+// ───────────────────────────────────────────────────────────────────────────
+
+require_once __DIR__ . '/config/app.php';
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/config/security.php';
+
+// ───────────────────────────────────────────────────────────────────────────
+// HELPERS
+// ───────────────────────────────────────────────────────────────────────────
+
+use App\Utils\Response;
+use App\Utils\Logger;
+
+/**
+ * Fonction helper pour retourner une réponse JSON
+ */
+function jsonResponse(array $data, int $statusCode = 200): void
+{
+    Response::json($data, $statusCode);
+}
+
+/**
+ * Fonction helper pour logger
+ */
+function logMessage(string $level, string $message, array $context = []): void
+{
+    Logger::log($level, $message, $context);
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// ROUTEUR PRINCIPAL
+// ───────────────────────────────────────────────────────────────────────────
 
 try {
-    $dsn = "mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4";
-    $pdo = new PDO($dsn, $db_user, $db_password, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+    // Récupérer la méthode HTTP
+    $method = $_SERVER['REQUEST_METHOD'];
+
+    // Récupérer l'URI et nettoyer
+    $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+    $uri = trim($uri, '/');
+
+    // Log de la requête
+    logMessage('info', "Request: {$method} /{$uri}", [
+        'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
     ]);
-    $stmt = $pdo->query("SELECT COUNT(*) FROM users");
-    $total_users = $stmt->fetchColumn();
-    $stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE is_active = 1");
-    $active_users = $stmt->fetchColumn();
-    $stmt = $pdo->query("SELECT COUNT(*) FROM groups");
-    $total_groups = $stmt->fetchColumn();
-} catch (PDOException $e) {
-    $total_users = $active_users = $total_groups = 0;
-    $db_error = $e->getMessage();
-}
-?>
+
+    // Extraire les segments de l'URI
+    $segments = explode('/', $uri);
+    $endpoint = $segments[0] ?? 'index';
+    $resource = $segments[1] ?? null;
+    $id = $segments[2] ?? null;
+
+    // ───────────────────────────────────────────────────────────────────────
+    // ROUTAGE DES ENDPOINTS API
+    // ───────────────────────────────────────────────────────────────────────
+
+    switch ($endpoint) {
+        // ──────────────────────────────────────────────────────────────────
+        // ENDPOINT: /api/*
+        // ──────────────────────────────────────────────────────────────────
+        case 'api':
+            if ($resource === null) {
+                jsonResponse([
+                    'status' => 'success',
+                    'message' => 'Bolt.DIY User Manager API v2.0',
+                    'version' => '2.0.0',
+                    'endpoints' => [
+                        '/api/auth/login' => 'POST - Authentification',
+                        '/api/auth/logout' => 'POST - Déconnexion',
+                        '/api/auth/me' => 'GET - Info utilisateur connecté',
+                        '/api/users' => 'GET - Liste des utilisateurs',
+                        '/api/users/{id}' => 'GET - Détails utilisateur',
+                        '/api/users' => 'POST - Créer utilisateur',
+                        '/api/users/{id}' => 'PUT - Modifier utilisateur',
+                        '/api/users/{id}' => 'DELETE - Supprimer utilisateur',
+                        '/api/groups' => 'GET - Liste des groupes',
+                        '/api/groups/{id}' => 'GET - Détails groupe',
+                        '/api/permissions' => 'GET - Liste des permissions',
+                        '/api/audit' => 'GET - Logs d\'audit',
+                    ]
+                ]);
+            }
+
+            // Router vers les contrôleurs appropriés
+            switch ($resource) {
+                case 'auth':
+                    require_once __DIR__ . '/src/Controllers/AuthController.php';
+                    $controller = new App\Controllers\AuthController();
+                    $controller->handle($method, $id);
+                    break;
+
+                case 'users':
+                    require_once __DIR__ . '/src/Controllers/UserController.php';
+                    $controller = new App\Controllers\UserController();
+                    $controller->handle($method, $id);
+                    break;
+
+                case 'groups':
+                    require_once __DIR__ . '/src/Controllers/GroupController.php';
+                    $controller = new App\Controllers\GroupController();
+                    $controller->handle($method, $id);
+                    break;
+
+                case 'permissions':
+                    require_once __DIR__ . '/src/Controllers/PermissionController.php';
+                    $controller = new App\Controllers\PermissionController();
+                    $controller->handle($method, $id);
+                    break;
+
+                case 'audit':
+                    require_once __DIR__ . '/src/Controllers/AuditController.php';
+                    $controller = new App\Controllers\AuditController();
+                    $controller->handle($method, $id);
+                    break;
+
+                default:
+                    jsonResponse([
+                        'status' => 'error',
+                        'message' => 'Endpoint API non trouvé'
+                    ], 404);
+            }
+            break;
+
+        // ──────────────────────────────────────────────────────────────────
+        // ENDPOINT: /health (healthcheck Docker)
+        // ──────────────────────────────────────────────────────────────────
+        case 'health':
+        case 'health.php':
+            jsonResponse([
+                'status' => 'healthy',
+                'service' => 'bolt-user-manager',
+                'version' => '2.0.0',
+                'timestamp' => date('Y-m-d H:i:s'),
+                'uptime' => sys_getloadavg()[0]
+            ]);
+            break;
+
+        // ──────────────────────────────────────────────────────────────────
+        // ENDPOINT: / (page d'accueil - redirige vers le frontend)
+        // ──────────────────────────────────────────────────────────────────
+        case 'index':
+        case '':
+            // Si c'est une requête API, retourner le statut
+            if (strpos($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json') !== false) {
+                jsonResponse([
+                    'status' => 'success',
+                    'message' => 'Bolt.DIY User Manager v2.0',
+                    'api_endpoint' => '/api',
+                    'documentation' => '/api'
+                ]);
+            } else {
+                // Rediriger vers le dashboard frontend
+                if (file_exists(__DIR__ . '/public/index.html')) {
+                    header('Location: /public/index.html');
+                    exit;
+                } else {
+                    // Page d'accueil temporaire si le frontend n'est pas encore créé
+                    ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Manager v2.0</title>
+    <title>Bolt.DIY User Manager v2.0</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;padding:20px}
-        .container{max-width:1200px;margin:0 auto}
-        .header{background:white;border-radius:15px;padding:30px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,0.2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px}
-        .header-left h1{color:#667eea;font-size:32px;margin-bottom:5px}
-        .header-left p{color:#666;font-size:14px}
-        .header-right{display:flex;gap:10px;align-items:center}
-        .user-info{display:flex;align-items:center;gap:10px;padding:10px 15px;background:#f3f4f6;border-radius:10px;font-size:14px;color:#374151}
-        .user-icon{width:35px;height:35px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:bold}
-        .btn-logout{padding:12px 24px;background:linear-gradient(135deg,#ef4444,#dc2626);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;transition:all 0.3s ease;text-decoration:none;display:inline-flex;align-items:center;gap:8px;font-size:15px}
-        .btn-logout:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(239,68,68,0.4)}
-        .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
-        .stat-card{background:white;border-radius:15px;padding:25px;box-shadow:0 10px 30px rgba(0,0,0,0.2);text-align:center}
-        .stat-card h3{color:#667eea;font-size:36px;margin-bottom:10px}
-        .stat-card p{color:#666;font-size:14px;text-transform:uppercase;letter-spacing:1px}
-        .footer{text-align:center;color:white;margin-top:30px;font-size:14px;opacity:0.9}
-        @media(max-width:768px){.header{flex-direction:column;text-align:center}.header-right{flex-direction:column;width:100%}.btn-logout{width:100%;justify-content:center}}
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 60px 40px;
+            max-width: 600px;
+        }
+        h1 { font-size: 48px; margin-bottom: 20px; }
+        p { font-size: 18px; margin-bottom: 30px; opacity: 0.9; }
+        .status { 
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        .api-link {
+            display: inline-block;
+            background: #fff;
+            color: #667eea;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: transform 0.3s;
+        }
+        .api-link:hover { transform: translateY(-2px); }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <div class="header-left">
-                <h1>🔧 User Manager v2.0</h1>
-                <p>Bolt.DIY Intranet Edition</p>
-            </div>
-            <div class="header-right">
-                <div class="user-info">
-                    <div class="user-icon"><?php echo strtoupper(substr($_SERVER['PHP_AUTH_USER']??'A',0,1));?></div>
-                    <span><strong><?php echo htmlspecialchars($_SERVER['PHP_AUTH_USER']??'Admin');?></strong></span>
-                </div>
-                <a href="/logout.php" class="btn-logout">🚪 Déconnexion</a>
-            </div>
+        <h1>🚀 Bolt.DIY User Manager</h1>
+        <p>Version 2.0.0 - API REST opérationnelle</p>
+        <div class="status">
+            <p>✅ Service démarré avec succès</p>
+            <p>🔗 API accessible : <strong>/api</strong></p>
+            <p>📊 Base de données : connectée</p>
         </div>
-        <div class="stats">
-            <div class="stat-card"><h3><?php echo $total_users;?></h3><p>Utilisateurs totaux</p></div>
-            <div class="stat-card"><h3><?php echo $active_users;?></h3><p>Utilisateurs actifs</p></div>
-            <div class="stat-card"><h3><?php echo $total_groups;?></h3><p>Groupes</p></div>
-        </div>
-        <?php if(isset($db_error)):?>
-        <div style="background:#fef2f2;border:2px solid #ef4444;border-radius:15px;padding:20px;margin-top:20px">
-            <h3 style="color:#dc2626;margin-bottom:10px">⚠️ Erreur de connexion</h3>
-            <p style="color:#7f1d1d;font-size:14px"><?php echo htmlspecialchars($db_error);?></p>
-        </div>
-        <?php endif;?>
-        <div class="footer">© 2025 Nbility - Bolt.DIY v6.7 - User Manager v2.0</div>
+        <a href="/api" class="api-link">Accéder à l'API</a>
     </div>
 </body>
 </html>
+                    <?php
+                    exit;
+                }
+            }
+            break;
+
+        // ──────────────────────────────────────────────────────────────────
+        // ENDPOINT: Inconnu
+        // ──────────────────────────────────────────────────────────────────
+        default:
+            jsonResponse([
+                'status' => 'error',
+                'message' => 'Endpoint non trouvé',
+                'path' => $uri
+            ], 404);
+    }
+
+} catch (\Throwable $e) {
+    // Log de l'erreur
+    logMessage('error', $e->getMessage(), [
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'trace' => $e->getTraceAsString()
+    ]);
+
+    // Retourner une erreur générique
+    jsonResponse([
+        'status' => 'error',
+        'message' => 'Une erreur interne est survenue',
+        'error_id' => uniqid('err_', true)
+    ], 500);
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * FIN DU ROUTER PRINCIPAL
+ * ═══════════════════════════════════════════════════════════════════════════
+ */

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="">
+    <title>User Manager - Permissions</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-users-cog"></i> User Manager</h2>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/users" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Utilisateurs</span>
+            </a>
+            <a href="/groups" class="nav-item">
+                <i class="fas fa-layer-group"></i>
+                <span>Groupes</span>
+            </a>
+            <a href="/permissions" class="nav-item active" data-role="admin">
+                <i class="fas fa-shield-alt"></i>
+                <span>Permissions</span>
+            </a>
+            <a href="/audit" class="nav-item" data-role="admin">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Audit</span>
+            </a>
+            <a href="/settings" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>Paramètres</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-details">
+                    <p class="user-name" id="userName">Loading...</p>
+                    <p class="user-role" id="userRole">user</p>
+                </div>
+            </div>
+            <button class="btn-logout" id="btnLogout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Déconnexion</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="btn-icon" id="btnMobileToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>Permissions</h1>
+                <span class="badge badge-info" id="permissionCount">0</span>
+            </div>
+            <div class="topbar-right">
+                <button class="btn btn-primary" id="btnCreatePermission" data-role="superadmin">
+                    <i class="fas fa-plus"></i>
+                    <span>Nouvelle Permission</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Filters -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="filters-container">
+                        <!-- Search -->
+                        <div class="filter-group flex-grow">
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" placeholder="Rechercher une permission..." id="searchInput">
+                            </div>
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div class="filter-group">
+                            <select id="filterCategory" class="form-select">
+                                <option value="">Toutes les catégories</option>
+                                <!-- Categories will be inserted here -->
+                            </select>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="filter-group">
+                            <button class="btn btn-secondary" id="btnRefresh">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permissions by Category -->
+            <div id="permissionsContainer">
+                <!-- Loading -->
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="loading">
+                            <i class="fas fa-spinner fa-spin"></i> Chargement des permissions...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Create/Edit Permission -->
+    <div class="modal" id="modalPermission">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-shield-alt"></i> <span id="modalPermissionTitle">Nouvelle Permission</span></h3>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="formPermission">
+                    <input type="hidden" id="permissionId" name="id">
+
+                    <div class="form-group">
+                        <label for="formName">Nom de la permission *</label>
+                        <input type="text" id="formName" name="name" required placeholder="Ex: users.create">
+                        <span class="form-hint">Format: resource.action (ex: users.create, groups.read)</span>
+                        <span class="form-error" id="errorName"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="formDescription">Description *</label>
+                        <textarea id="formDescription" name="description" rows="3" required placeholder="Décrivez la permission..."></textarea>
+                        <span class="form-error" id="errorDescription"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="formCategory">Catégorie *</label>
+                        <input type="text" id="formCategory" name="category" required placeholder="Ex: users, groups, audit">
+                        <span class="form-hint">Catégorie pour organiser les permissions</span>
+                        <span class="form-error" id="errorCategory"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button class="btn btn-primary" id="btnSubmitPermission">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Permission Details -->
+    <div class="modal" id="modalPermissionDetails">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-shield-alt"></i> Détails de la permission</h3>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="permission-details" id="permissionDetailsContent">
+                    <!-- Content will be inserted here -->
+                </div>
+
+                <!-- Groups using this permission -->
+                <div class="permission-groups">
+                    <h4><i class="fas fa-layer-group"></i> Groupes ayant cette permission</h4>
+                    <div class="groups-badges" id="permissionGroups">
+                        <!-- Groups will be inserted here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirm Delete -->
+    <div class="modal" id="modalConfirmDelete">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> Confirmer la suppression</h3>
+                <button class="modal-close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer cette permission ?</p>
+                <p class="text-danger"><strong>Cette action est irréversible.</strong></p>
+                <p class="text-warning">⚠️ Cette permission sera retirée de tous les groupes qui l'utilisent.</p>
+                <p id="deletePermissionInfo"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                <button class="btn btn-danger" id="btnConfirmDelete">
+                    <i class="fas fa-trash"></i> Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="/js/api.js"></script>
+    <script src="/js/permissions.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

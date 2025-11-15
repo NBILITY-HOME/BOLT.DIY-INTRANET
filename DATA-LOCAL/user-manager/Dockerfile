@@ -1,71 +1,94 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# BOLT.DIY USER MANAGER v2.0 - Dockerfile
+# © Copyright Nbility 2025 - contact@nbility.fr
+# PHP 8.2 + Apache + Extensions optimisées
+# ═══════════════════════════════════════════════════════════════════════════
+
 FROM php:8.2-apache
 
 # Métadonnées
 LABEL maintainer="contact@nbility.fr"
-LABEL description="Bolt.DIY User Manager v2.0 with PHP 8.2 and Apache"
-LABEL version="2.0"
+LABEL version="2.0.0"
+LABEL description="Bolt.DIY User Manager - Interface de gestion des utilisateurs"
+
+# Variables d'environnement
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Paris
+ENV APACHE_DOCUMENT_ROOT=/var/www/html
 
 # Installation des dépendances système
 RUN apt-get update && apt-get install -y \
-    git \
+    # Outils de base
     curl \
+    wget \
+    git \
+    unzip \
+    vim \
+    nano \
+    # Librairies pour PHP
+    libzip-dev \
     libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     libonig-dev \
     libxml2-dev \
-    libzip-dev \
-    zip \
-    unzip \
+    libicu-dev \
+    # MariaDB client
     default-mysql-client \
+    # Outils de monitoring
+    htop \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Installation des extensions PHP
-RUN docker-php-ext-install \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+    pdo \
     pdo_mysql \
     mysqli \
+    zip \
+    gd \
     mbstring \
     exif \
     pcntl \
     bcmath \
-    gd \
-    zip
-
-# Installation de Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+    intl \
+    opcache \
+    soap
 
 # Configuration Apache
-RUN a2enmod rewrite headers expires && \
-    sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
+RUN a2enmod rewrite headers expires deflate ssl \
+    && sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
+    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Configuration PHP
-RUN echo "memory_limit = 256M" > /usr/local/etc/php/conf.d/memory.ini && \
-    echo "upload_max_filesize = 20M" >> /usr/local/etc/php/conf.d/memory.ini && \
-    echo "post_max_size = 20M" >> /usr/local/etc/php/conf.d/memory.ini && \
-    echo "max_execution_time = 60" >> /usr/local/etc/php/conf.d/memory.ini
+# Copier la configuration PHP personnalisée
+COPY php.ini /usr/local/etc/php/conf.d/custom.ini
 
-# Répertoire de travail
-WORKDIR /var/www/html
+# Créer les répertoires nécessaires
+RUN mkdir -p /var/www/html/logs \
+    && mkdir -p /var/www/html/cache \
+    && mkdir -p /var/www/html/uploads \
+    && mkdir -p /var/www/html/backups \
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html
 
-# Copie du composer.json si présent
-COPY app/composer.json* /var/www/html/
+# Configuration des permissions
+RUN usermod -u 1000 www-data \
+    && groupmod -g 1000 www-data
 
-# Installation des dépendances PHP (si composer.json existe)
-RUN if [ -f composer.json ]; then \
-        composer install --no-dev --optimize-autoloader --no-interaction; \
-    fi
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost/health.php || exit 1
 
-# Copie du code source
-COPY app/ /var/www/html/
-
-# Fichier health check
-RUN echo "<?php http_response_code(200); echo 'healthy'; ?>" > /var/www/html/health.php
-
-# Permissions
-RUN chown -R www-data:www-data /var/www/html && \
-    chmod -R 755 /var/www/html
-
-# Port exposé
+# Exposition du port
 EXPOSE 80
 
-# Démarrage Apache
+# Point d'entrée
+WORKDIR /var/www/html
+
+# Démarrage Apache en foreground
 CMD ["apache2-foreground"]
 
+# ═══════════════════════════════════════════════════════════════════════════
+# FIN DU DOCKERFILE
+# ═══════════════════════════════════════════════════════════════════════════

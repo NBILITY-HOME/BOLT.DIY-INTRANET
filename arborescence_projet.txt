@@ -1,0 +1,52 @@
+BOLT.DIY-INTRANET/
+└── DATA-LOCAL/
+    └── user-manager/
+        ├── Dockerfile
+        ├── php.ini
+        └── app/
+            ├── index.php (router principal)
+            ├── config/
+            │   ├── database.php
+            │   ├── security.php
+            │   └── app.php
+            ├── src/
+            │   ├── Controllers/
+            │   │   ├── AuthController.php
+            │   │   ├── UserController.php
+            │   │   ├── GroupController.php
+            │   │   ├── PermissionController.php
+            │   │   └── AuditController.php
+            │   ├── Models/
+            │   │   ├── User.php
+            │   │   ├── Group.php
+            │   │   ├── Permission.php
+            │   │   └── AuditLog.php
+            │   ├── Middleware/
+            │   │   ├── AuthMiddleware.php
+            │   │   ├── CSRFMiddleware.php
+            │   │   └── RateLimitMiddleware.php
+            │   └── Utils/
+            │       ├── Database.php
+            │       ├── Validator.php
+            │       ├── Response.php
+            │       └── Logger.php
+            ├── public/
+            │   ├── index.html (dashboard)
+            │   ├── login.html
+            │   ├── users.html
+            │   ├── groups.html
+            │   ├── permissions.html
+            │   ├── audit.html
+            │   ├── assets/
+            │   │   ├── css/
+            │   │   │   └── style.css
+            │   │   └── js/
+            │   │       ├── api.js
+            │   │       ├── auth.js
+            │   │       ├── users.js
+            │   │       ├── groups.js
+            │   │       └── utils.js
+            │   └── favicon.ico
+            └── scripts/
+                ├── backup.sh
+                └── maintenance.sh

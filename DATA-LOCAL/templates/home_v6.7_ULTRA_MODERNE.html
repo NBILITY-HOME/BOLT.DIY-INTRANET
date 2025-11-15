@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolt.DIY Intranet - Page d'Accueil</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --dark-bg: #0f1419;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(245, 87, 108, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(79, 172, 254, 0.1) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header moderne */
+        .header {
+            text-align: center;
+            margin-bottom: 80px;
+            position: relative;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px;
+            background: var(--primary-gradient);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        h1 {
+            font-size: 56px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f5576c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* Services Grid */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 80px;
+        }
+
+        .service-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .service-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .service-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
+        }
+
+        .service-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--primary-gradient);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 24px;
+        }
+
+        .service-card:nth-child(2) .service-icon {
+            background: var(--secondary-gradient);
+        }
+
+        .service-card:nth-child(3) .service-icon {
+            background: var(--success-gradient);
+        }
+
+        .service-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .service-description {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+
+        .btn-service {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-service:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateX(4px);
+        }
+
+        /* System Info Section REDESIGNÉE - STYLE 2025 */
+        .system-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 60px 40px;
+            margin-bottom: 40px;
+        }
+
+        .system-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .system-header h2 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .system-header p {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .system-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .system-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .system-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .system-card:hover::before {
+            opacity: 1;
+        }
+
+        .system-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(102, 126, 234, 0.3);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.15);
+        }
+
+        .system-card-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            background: var(--primary-gradient);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .system-card:nth-child(2) .system-card-icon {
+            background: var(--secondary-gradient);
+        }
+
+        .system-card:nth-child(3) .system-card-icon {
+            background: var(--success-gradient);
+        }
+
+        .system-card:nth-child(4) .system-card-icon {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .system-card-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .system-card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .system-card-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Footer moderne */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 36px; }
+            .services-grid { grid-template-columns: 1fr; }
+            .system-grid { grid-template-columns: 1fr; }
+            .system-section { padding: 40px 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">⚡</div>
+            <h1>Bolt.DIY Intranet</h1>
+            <p class="subtitle">Plateforme de développement et gestion unifiée</p>
+        </div>
+
+        <!-- Services Grid -->
+        <div class="services-grid">
+            <!-- Bolt.DIY Service -->
+            <div class="service-card">
+                <div class="service-icon">🚀</div>
+                <h3 class="service-title">Bolt.DIY</h3>
+                <p class="service-description">Créez des applications web complètes avec l'IA. Interface de développement rapide avec support multi-LLM.</p>
+                <a href="http://192.168.1.200:8585" class="btn-service">
+                    Accéder à Bolt
+                    <span>→</span>
+                </a>
+            </div>
+
+            <!-- User Manager Service -->
+            <div class="service-card">
+                <div class="service-icon">👥</div>
+                <h3 class="service-title">User Manager</h3>
+                <p class="service-description">Gestion centralisée des utilisateurs, groupes et permissions. Interface d'administration complète.</p>
+                <a href="http://192.168.1.200:8687" class="btn-service">
+                    Gérer les utilisateurs
+                    <span>→</span>
+                </a>
+            </div>
+
+            <!-- Documentation Service -->
+            <div class="service-card">
+                <div class="service-icon">📚</div>
+                <h3 class="service-title">Documentation</h3>
+                <p class="service-description">Guides d'utilisation, API documentation et ressources pour bien démarrer avec la plateforme.</p>
+                <a href="https://github.com/NBILITY-HOME/BOLT.DIY-INTRANET" target="_blank" rel="noopener noreferrer" class="btn-service">
+                    Voir la doc
+                    <span>→</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- System Information Section REDESIGNÉE -->
+        <div class="system-section">
+            <div class="system-header">
+                <h2>ℹ️ Informations Système</h2>
+                <p>État actuel de la plateforme Bolt.DIY Intranet</p>
+            </div>
+
+            <div class="system-grid">
+                <!-- Version Card -->
+                <div class="system-card">
+                    <div class="system-card-icon">🔖</div>
+                    <div class="system-card-title">Version</div>
+                    <div class="system-card-value">v6.7</div>
+                    <div class="system-card-label">Bolt.DIY Intranet</div>
+                </div>
+
+                <!-- Status Card -->
+                <div class="system-card">
+                    <div class="system-card-icon">✅</div>
+                    <div class="system-card-title">Statut</div>
+                    <div class="system-card-value">Opérationnel</div>
+                    <div class="system-card-label">Tous les services actifs</div>
+                </div>
+
+                <!-- Services Card -->
+                <div class="system-card">
+                    <div class="system-card-icon">⚙️</div>
+                    <div class="system-card-title">Services</div>
+                    <div class="system-card-value">3</div>
+                    <div class="system-card-label">Actifs</div>
+                </div>
+
+                <!-- Support Card -->
+                <div class="system-card">
+                    <div class="system-card-icon">💬</div>
+                    <div class="system-card-title">Support</div>
+                    <div class="system-card-value">24/7</div>
+                    <div class="system-card-label">contact@nbility.fr</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-links">
+                <a href="https://github.com/NBILITY-HOME/BOLT.DIY-INTRANET" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
+                <a href="mailto:contact@nbility.fr" class="footer-link">Support</a>
+                <a href="#" class="footer-link">Documentation</a>
+            </div>
+            <p>&copy; 2025 Nbility - Bolt.DIY Intranet v6.7 - Tous droits réservés</p>
+        </div>
+    </div>
+</body>
+</html>
