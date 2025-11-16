@@ -19,7 +19,7 @@ services:
     networks:
       - bolt-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost"]
+      test: ["CMD-SHELL", "pidof nginx || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -82,6 +82,7 @@ services:
     container_name: bolt-user-manager
     restart: unless-stopped
     expose:
+      - "80"
       - "8080"
     volumes:
       - ${USERMANAGER_DIR}/app:/var/www/html

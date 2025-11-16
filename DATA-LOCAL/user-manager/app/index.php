@@ -1,6 +1,26 @@
 <?php
 /**
  * ═══════════════════════════════════════════════════════════════════════════
+ * BOLT.DIY USER MANAGER - Index Principal
+ * © Copyright Nbility 2025 - contact@nbility.fr
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DÉTECTION DU PORT DU REVERSE PROXY (Fix perte du port)
+// ═══════════════════════════════════════════════════════════════════════════
+if (isset($_SERVER['HTTP_X_FORWARDED_HOST'])) {
+    $_SERVER['HTTP_HOST'] = $_SERVER['HTTP_X_FORWARDED_HOST'];
+
+    // Extraire le port si présent dans X-Forwarded-Host
+    if (preg_match('/^([^:]+):(\d+)$/', $_SERVER['HTTP_X_FORWARDED_HOST'], $matches)) {
+        $_SERVER['SERVER_NAME'] = $matches[1];
+        $_SERVER['SERVER_PORT'] = $matches[2];
+    }
+}
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
  * BOLT.DIY USER MANAGER v2.0 - Router API REST Principal
  * © Copyright Nbility 2025 - contact@nbility.fr
  * 
