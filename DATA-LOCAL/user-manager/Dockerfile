@@ -6,6 +6,12 @@
 
 FROM php:8.2-apache
 
+# ★ CONFIGURER APACHE POUR ÉCOUTER SUR LE PORT 8080 ★
+RUN sed -i 's/Listen 80/Listen 8080/g' /etc/apache2/ports.conf \
+    && sed -i 's/:80>/:8080>/g' /etc/apache2/sites-available/000-default.conf \
+    && echo "ServerName localhost" >> /etc/apache2/apache2.conf
+
+
 # Métadonnées
 LABEL maintainer="contact@nbility.fr"
 LABEL version="2.0.0"
