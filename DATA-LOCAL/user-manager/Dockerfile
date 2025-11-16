@@ -81,7 +81,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost/health.php || exit 1
 
 # Exposition du port
-EXPOSE 80
+EXPOSE 8080
 
 # Point d'entrée
 WORKDIR /var/www/html

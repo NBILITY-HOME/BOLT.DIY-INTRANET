@@ -19,6 +19,6 @@ RUN mkdir -p /var/www/html /app && \
     chown -R www-data:www-data /var/www/html /app && \
     chmod 755 /var/www/html /app
 
-EXPOSE 80
+EXPOSE 8080
 
 CMD ["apache2-foreground"]
