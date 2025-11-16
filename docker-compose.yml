@@ -18,11 +18,6 @@ services:
       - user-manager
     networks:
       - bolt-network
-    healthcheck:
-      test: ["CMD-SHELL", "pidof nginx || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # =========================================================================
   # BOLT.DIY - Application principale
@@ -82,7 +77,6 @@ services:
     container_name: bolt-user-manager
     restart: unless-stopped
     expose:
-      - "80"
       - "8080"
     volumes:
       - ${USERMANAGER_DIR}/app:/var/www/html

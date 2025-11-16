@@ -3,137 +3,612 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bolt.DIY Nbility - Accueil</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>BOLT.DIY - Nbility Edition</title>
+    <meta name="description" content="BOLT.DIY Nbility Edition - Intranet IA moderne avec gestion multi-utilisateurs.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        :root{
-            --primary:#6366f1;
-            --secondary:#8b5cf6;
-            --accent:#06b6d4;
-            --dark:#0f172a;
-            --surface:#1e293b;
-            --elevated:#334155;
-            --text:#f1f5f9;
-            --text-sec:#cbd5e1;
-            --success:#10b981;
-            --glow:rgba(99,102,241,.5);
-            /* Suppression de --grid-size */
+        :root {
+            --bg-gradient: radial-gradient(circle at top, #1f2933 0, #020617 45%, #000 100%);
+            --primary: #38bdf8;
+            --primary-soft: rgba(56, 189, 248, 0.15);
+            --accent: #a855f7;
+            --accent-soft: rgba(168, 85, 247, 0.12);
+            --danger: #fb7185;
+            --danger-soft: rgba(248, 113, 113, 0.1);
+            --card-bg: rgba(15, 23, 42, 0.85);
+            --card-border: rgba(148, 163, 184, 0.25);
+            --text-soft: #94a3b8;
+            --text-strong: #e5e7eb;
+            --glass: rgba(15, 23, 42, 0.7);
         }
 
-        /* NOUVELLE ANIMATION : Dégradé de fond qui bouge lentement */
-        @keyframes gradient-shift {
-            0% { background-position: 0% 0%; }
-            50% { background-position: 100% 100%; }
-            100% { background-position: 0% 0%; }
+        * {
+            box-sizing: border-box;
         }
 
-        @keyframes pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:.8}}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-soft);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-        body{
-            font-family:Inter,sans-serif;
-            background-color: #0c121e; /* Couleur de base bleu foncé */
-            min-height:100vh;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            padding:20px;
-            position:relative;
-            overflow:hidden;
-
-            /* FOND BLEU FONCÉ ANIMÉ: Grand dégradé pour un effet de mouvement subtil */
+        .grid-background {
+            position: fixed;
+            inset: 0;
             background-image:
-                linear-gradient(135deg, #0c121e 0%, #1a233a 25%, #2c0e40 50%, #1a233a 75%, #0c121e 100%);
-
-            background-size: 400% 400%; /* Taille du dégradé beaucoup plus grande que la vue */
-            animation: gradient-shift 30s ease infinite; /* Déplacement lent du dégradé */
-            transition: all 0.5s ease-in-out;
+                linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.9)),
+                radial-gradient(circle at 10% 20%, rgba(56, 189, 248, 0.18), transparent 55%),
+                radial-gradient(circle at 80% 0%, rgba(168, 85, 247, 0.18), transparent 55%),
+                radial-gradient(circle at 50% 100%, rgba(248, 113, 113, 0.12), transparent 55%);
+            pointer-events: none;
+            z-index: 0;
         }
 
-        /* Effet de Survol du Fond : Accélère ou intensifie l'effet */
-        body:hover {
-            animation-duration: 15s; /* Accélère l'animation au survol */
-            background-size: 600% 600%; /* Élargit le dégradé pour un effet plus intense */
+        .scanline {
+            position: fixed;
+            inset: 0;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(15, 23, 42, 0.9) 0,
+                rgba(15, 23, 42, 0.9) 1px,
+                rgba(15, 23, 42, 0.85) 2px
+            );
+            mix-blend-mode: soft-light;
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 0;
         }
 
-        body::before{
-            content:'';
-            position:absolute;
-            width:600px;
-            height:600px;
-            background:radial-gradient(circle,var(--glow) 0%,transparent 70%);
-            top:-200px;
-            right:-200px;
-            border-radius:50%;
-            animation:pulse 8s ease-in-out infinite;
-            transition: transform 0.8s ease-in-out, opacity 0.8s ease-in-out;
-            z-index: 1; /* Assurez-vous qu'il est sous le contenu */
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1080px;
+            padding: 32px 20px;
         }
 
-        /* Effet de Survol du Fond (Lumière) */
-        body:hover::before {
-            transform: scale(1.3);
-            opacity: 1;
+        .shell {
+            border-radius: 26px;
+            background: linear-gradient(145deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.98));
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            box-shadow:
+                0 24px 80px rgba(15, 23, 42, 0.9),
+                0 0 0 1px rgba(15, 23, 42, 0.9),
+                0 0 50px rgba(56, 189, 248, 0.08);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
         }
 
-        .container{max-width:1200px;width:100%;position:relative;z-index:10;animation:fadeIn 1s}
-        .header{text-align:center;margin-bottom:60px}
-        .logo{font-size:3.5rem;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--secondary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;letter-spacing:-2px}
-        .tagline{color:var(--text-sec);font-size:1.25rem;font-weight:300}
-        .status{display:inline-flex;align-items:center;gap:8px;background:rgba(16,185,129,.1);border:1px solid var(--success);color:var(--success);padding:8px 16px;border-radius:20px;font-size:.85rem;margin-top:12px}
-        .status-dot{width:8px;height:8px;background:var(--success);border-radius:50%;animation:pulse 2s infinite}
-        .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:30px;margin-bottom:40px}
-        .card{background:var(--surface);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:40px;transition:all .4s;backdrop-filter:blur(10px);position:relative;overflow:hidden}
-        .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--secondary),var(--accent));transform:translateX(-100%);transition:transform .6s}
-        .card:hover::before{transform:translateX(0)}
-        .card:hover{transform:translateY(-8px);border-color:rgba(99,102,241,.5);box-shadow:0 20px 60px rgba(0,0,0,.4)}
-        .icon{width:60px;height:60px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:24px}
-        .title{color:var(--text);font-size:1.75rem;font-weight:700;margin-bottom:12px}
-        .desc{color:var(--text-sec);line-height:1.6;margin-bottom:24px}
-        .link{display:inline-flex;align-items:center;gap:8px;color:var(--primary);text-decoration:none;font-weight:600;padding:12px 24px;background:rgba(99,102,241,.1);border:1px solid var(--primary);border-radius:12px;transition:all .3s}
-        .link:hover{background:var(--primary);color:#fff;transform:translateX(4px)}
-        .info{background:var(--elevated);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:32px;text-align:center}
-        .info-title{color:var(--text);font-size:1.5rem;font-weight:700;margin-bottom:16px}
-        .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-top:24px}
-        .info-item{background:var(--surface);padding:20px;border-radius:12px}
-        .info-label{color:var(--text-sec);font-size:.85rem;text-transform:uppercase;margin-bottom:8px}
-        .info-value{color:var(--accent);font-size:1.25rem;font-weight:700}
-        .footer{text-align:center;margin-top:40px;color:var(--text-sec)}
-        .badge{display:inline-block;background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.3);color:#ffc107;padding:4px 12px;border-radius:12px;font-size:.75rem;margin-left:8px;font-weight:600}
-        @media(max-width:768px){.logo{font-size:2.5rem}.cards,.info-grid{grid-template-columns:1fr}}
+        .shell::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: 26px;
+            padding: 1px;
+            background: linear-gradient(
+                120deg,
+                rgba(56, 189, 248, 0.2),
+                rgba(168, 85, 247, 0.2),
+                rgba(248, 113, 113, 0.15)
+            );
+            -webkit-mask:
+                linear-gradient(#000 0 0) content-box,
+                linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.6;
+        }
+
+        .shell-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 22px;
+        }
+
+        .shell-buttons {
+            display: flex;
+            gap: 7px;
+        }
+
+        .shell-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 999px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(15, 23, 42, 0.9);
+            box-shadow:
+                0 0 0 1px rgba(15, 23, 42, 0.9),
+                0 4px 10px rgba(15, 23, 42, 0.9);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shell-dot::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4), transparent 55%);
+        }
+
+        .shell-dot.red { background: radial-gradient(circle at 30% 30%, #f97373, #7f1d1d); }
+        .shell-dot.yellow { background: radial-gradient(circle at 30% 30%, #fbbf24, #78350f); }
+        .shell-dot.green { background: radial-gradient(circle at 30% 30%, #34d399, #064e3b); }
+
+        .shell-title {
+            font-size: 13px;
+            color: #64748b;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .shell-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: radial-gradient(circle at 30% 30%, #22c55e, #14532d);
+            box-shadow: 0 0 12px rgba(34, 197, 94, 0.9);
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: minmax(0, 3.5fr) minmax(0, 3fr);
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        .hero {
+            padding-right: 12px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--primary-soft), transparent);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #bae6fd;
+            margin-bottom: 10px;
+        }
+
+        .eyebrow i {
+            color: var(--primary);
+        }
+
+        .title {
+            font-size: 28px;
+            line-height: 1.25;
+            color: #e5e7eb;
+            margin-bottom: 10px;
+        }
+
+        .title span {
+            background: linear-gradient(120deg, #38bdf8, #a855f7, #f97373);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #9ca3af;
+            margin-bottom: 18px;
+            max-width: 540px;
+        }
+
+        .pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 11px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            font-size: 11px;
+            color: #e5e7eb;
+        }
+
+        .pill i {
+            font-size: 11px;
+            color: var(--primary);
+        }
+
+        .sections {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 12px 13px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-card::before {
+            content: "";
+            position: absolute;
+            inset: -40%;
+            background: radial-gradient(circle at top,
+                rgba(56, 189, 248, 0.12),
+                transparent 65%);
+            opacity: 0.4;
+        }
+
+        .section-card h3 {
+            font-size: 13px;
+            color: #e5e7eb;
+            margin: 0 0 6px;
+        }
+
+        .section-card p {
+            font-size: 11px;
+            color: var(--text-soft);
+            margin: 0 0 8px;
+        }
+
+        .section-meta {
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+        }
+
+        .section-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .section-meta i {
+            font-size: 12px;
+            color: var(--primary);
+        }
+
+        .cta-column {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .cta-card {
+            background: var(--card-bg);
+            border-radius: 18px;
+            padding: 14px 15px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-card::before {
+            content: "";
+            position: absolute;
+            inset: -40%;
+            background: radial-gradient(circle at top,
+                rgba(56, 189, 248, 0.18),
+                transparent 65%);
+            opacity: 0.4;
+        }
+
+        .cta-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .cta-title {
+            font-size: 13px;
+            color: #e5e7eb;
+            margin: 0;
+        }
+
+        .cta-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            color: #9ca3af;
+        }
+
+        .cta-body {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+
+        .cta-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 9px 11px;
+            border-radius: 999px;
+            font-size: 12px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.16s ease-out;
+        }
+
+        .btn-primary {
+            background: linear-gradient(120deg, #0ea5e9, #22c55e);
+            border-color: rgba(34, 197, 94, 0.6);
+            color: white;
+            box-shadow:
+                0 10px 35px rgba(56, 189, 248, 0.45),
+                0 0 0 1px rgba(15, 23, 42, 0.95);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow:
+                0 14px 40px rgba(56, 189, 248, 0.55),
+                0 0 0 1px rgba(15, 23, 42, 0.95);
+        }
+
+        .btn-secondary {
+            background: rgba(15, 23, 42, 0.9);
+            border-color: rgba(148, 163, 184, 0.5);
+            color: #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(15, 23, 42, 1);
+            border-color: rgba(148, 163, 184, 0.8);
+        }
+
+        .btn-danger {
+            background: rgba(30, 41, 59, 0.95);
+            border-color: rgba(248, 113, 113, 0.6);
+            color: #fecaca;
+        }
+
+        .btn-danger:hover {
+            background: rgba(30, 41, 59, 1);
+            box-shadow: 0 0 22px rgba(248, 113, 113, 0.45);
+        }
+
+        .btn i {
+            font-size: 13px;
+        }
+
+        .footer {
+            margin-top: 18px;
+            font-size: 11px;
+            color: #64748b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 14px;
+        }
+
+        .footer-links a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 11px;
+        }
+
+        .footer-links a:hover {
+            color: #e5e7eb;
+        }
+
+        @media (max-width: 860px) {
+            .content {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .hero {
+                padding-right: 0;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .shell {
+                padding: 18px;
+            }
+
+            .sections {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 class="logo">BOLT.DIY</h1>
-            <p class="tagline">Plateforme de Développement IA Avancée</p>
-            <div class="status"><span class="status-dot"></span><span>Système Opérationnel</span></div>
-        </div>
-        <div class="cards">
-            <div class="card">
-                <div class="icon">🚀</div>
-                <h2 class="title">Bolt.DIY <span class="badge">Auth requise</span></h2>
-                <p class="desc">Interface principale de développement assisté par IA. Accédez à vos projets et bénéficiez de l'assistance des modèles de langage avancés.</p>
-                <a href="http://192.168.1.200:8585/bolt" target="_blank" rel="noopener noreferrer" class="link">Accéder à Bolt <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>
+<div class="grid-background"></div>
+<div class="scanline"></div>
+
+<div class="container">
+    <div class="shell">
+        <div class="shell-header">
+            <div class="shell-buttons">
+                <div class="shell-dot red"></div>
+                <div class="shell-dot yellow"></div>
+                <div class="shell-dot green"></div>
             </div>
-            <div class="card">
-                <div class="icon">👥</div>
-                <h2 class="title">Admin Manager</h2>
-                <p class="desc">Gérez les utilisateurs, les accès et les permissions de votre instance Bolt.DIY depuis une interface intuitive.</p>
-                <a href="./user-manager/" target="_blank" rel="noopener noreferrer" class="link">Gérer les utilisateurs <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg></a>
+            <div class="shell-title">BOLT.DIY • Nbility Intranet</div>
+            <div class="shell-status">
+                <span class="status-dot"></span>
+                <span>Services opérationnels</span>
             </div>
         </div>
-        <div class="info">
-            <h3 class="info-title">Informations Système</h3>
-            <div class="info-grid">
-                <div class="info-item"><div class="info-label">Version</div><div class="info-value">2.5</div></div>
-                <div class="info-item"><div class="info-label">Édition</div><div class="info-value">Nbility</div></div>
-                <div class="info-item"><div class="info-label">Statut</div><div class="info-value">En ligne</div></div>
+
+        <div class="content">
+            <section class="hero">
+                <div class="eyebrow">
+                    <i class="fas fa-bolt"></i>
+                    INTRANET IA • 2025
+                </div>
+                <h1 class="title">
+                    Votre hub <span>IA + Intranet</span> clé en main.
+                </h1>
+                <p class="subtitle">
+                    Déployez un intranet moderne avec authentification sécurisée, gestion des utilisateurs
+                    et accès instantané à Bolt.DIY pour prototyper vos applications IA.
+                </p>
+
+                <div class="pill-row">
+                    <div class="pill">
+                        <i class="fas fa-shield-alt"></i>
+                        Authentification Nginx sécurisée
+                    </div>
+                    <div class="pill">
+                        <i class="fas fa-users-cog"></i>
+                        Gestion multi-utilisateurs
+                    </div>
+                    <div class="pill">
+                        <i class="fas fa-robot"></i>
+                        LLMs connectés (OpenAI, Claude, Ollama…)
+                    </div>
+                </div>
+
+                <div class="sections">
+                    <div class="section-card">
+                        <h3>
+                            <i class="fas fa-network-wired" style="color: var(--primary); margin-right: 6px;"></i>
+                            Proxy d’accès unifié
+                        </h3>
+                        <p>
+                            Nginx centralise toutes les entrées : page d’accueil, Bolt.DIY et interface User Manager,
+                            derrière un seul port et une seule URL.
+                        </p>
+                        <div class="section-meta">
+                            <span><i class="fas fa-lock"></i> HTTPS prêt via proxy externe</span>
+                        </div>
+                    </div>
+                    <div class="section-card">
+                        <h3>
+                            <i class="fas fa-database" style="color: var(--accent); margin-right: 6px;"></i>
+                            Stack Docker optimisée
+                        </h3>
+                        <p>
+                            Conteneurs isolés pour Bolt.DIY, Nginx et User Manager, avec MariaDB dédiée pour
+                            les comptes d’accès.
+                        </p>
+                        <div class="section-meta">
+                            <span><i class="fas fa-microchip"></i> Compatible VPS & on-premise</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="cta-column">
+                <div class="cta-card">
+                    <div class="cta-header">
+                        <h2 class="cta-title">
+                            <i class="fas fa-terminal" style="color: var(--primary); margin-right: 6px;"></i>
+                            Accès unique via Nginx
+                        </h2>
+                        <div class="cta-badge">Point d’entrée</div>
+                    </div>
+                    <p class="cta-body">
+                        Tout passe par ce point d’accès unique. Ajoutez-le à vos favoris, partagez-le à vos équipes
+                        et utilisez-le comme porte d’entrée vers l’intranet.
+                    </p>
+                    <div class="cta-actions">
+                        <a href="/" class="btn btn-secondary">
+                            <i class="fas fa-home"></i>
+                            Page d’accueil
+                        </a>
+                    </div>
+                </div>
+
+                <div class="cta-card">
+                    <div class="cta-header">
+                        <h2 class="cta-title">
+                            <i class="fas fa-bolt" style="color: var(--accent); margin-right: 6px;"></i>
+                            Accéder à Bolt.DIY
+                        </h2>
+                        <div class="cta-badge">Studio IA</div>
+                    </div>
+                    <p class="cta-body">
+                        Lancez l’interface Bolt.DIY pour créer, tester et déployer vos applications IA full‑stack
+                        directement depuis votre navigateur.
+                    </p>
+                    <div class="cta-actions">
+                        <a href="./bolt/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                            <i class="fas fa-external-link-alt"></i>
+                            Ouvrir Bolt.DIY
+                        </a>
+                    </div>
+                </div>
+
+                <div class="cta-card">
+                    <div class="cta-header">
+                        <h2 class="cta-title">
+                            <i class="fas fa-users-cog" style="color: var(--danger); margin-right: 6px;"></i>
+                            User Manager
+                        </h2>
+                        <div class="cta-badge">Administration</div>
+                    </div>
+                    <p class="cta-body">
+                        Gérer les comptes d’accès HTTP Basic utilisés par Nginx pour protéger l’intranet :
+                        création, suppression et rotation des mots de passe.
+                    </p>
+                    <div class="cta-actions">
+                        <!-- LIEN CORRIGÉ : relatif (conserve le port) -->
+                        <a href="./user-manager/" target="_blank" rel="noopener noreferrer" class="btn btn-danger">
+                            <i class="fas fa-user-shield"></i>
+                            Gérer les utilisateurs
+                        </a>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <div class="footer">
+            <span>© 2025 Nbility • BOLT.DIY Intranet Edition</span>
+            <div class="footer-links">
+                <a href="https://github.com/NBILITY-HOME/BOLT.DIY-INTRANET" target="_blank" rel="noopener noreferrer">
+                    <i class="fab fa-github"></i> Code source
+                </a>
+                <a href="mailto:contact@nbility.fr">
+                    <i class="fas fa-envelope"></i> contact@nbility.fr
+                </a>
             </div>
         </div>
-        <div class="footer"><p>© 2025 Bolt.DIY Nbility Edition</p></div>
     </div>
+</div>
 </body>
 </html>
