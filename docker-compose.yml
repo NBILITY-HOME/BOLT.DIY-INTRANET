@@ -77,7 +77,7 @@ services:
     container_name: bolt-user-manager
     restart: unless-stopped
     expose:
-      - "8080"
+      - "80"
     volumes:
       - ${USERMANAGER_DIR}/app:/var/www/html
     environment:
