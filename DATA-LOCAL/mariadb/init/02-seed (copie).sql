@@ -15,6 +15,19 @@ USE usermanager;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ═══════════════════════════════════════════════════════════════════════════
+-- 1. CRÉER LE SUPER ADMIN EN PREMIER (important pour les FK created_by)
+-- ═══════════════════════════════════════════════════════════════════════════
+
+INSERT INTO `um_users` (`id`, `username`, `email`, `password_hash`, `role`, `status`, `quota_bolt_users`, `theme`, `locale`, `timezone`, `created_at`) 
+VALUES (1, '$ADMIN_USERNAME', '$ADMIN_EMAIL', '$HASHED_PASSWORD', 'superadmin', 'active', 999, 'dark', 'fr_FR', 'Europe/Paris', NOW())
+ON DUPLICATE KEY UPDATE 
+    email = VALUES(email), 
+    password_hash = VALUES(password_hash),
+    role = 'superadmin',
+    status = 'active',
+    quota_bolt_users = 999;
+
+-- ═══════════════════════════════════════════════════════════════════════════
 -- 2. PUIS CRÉER LES GROUPES (qui référencent created_by=1)
 -- ═══════════════════════════════════════════════════════════════════════════
 
