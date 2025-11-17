@@ -6,12 +6,6 @@
 
 FROM php:8.2-apache
 
-# ★ CONFIGURER APACHE POUR ÉCOUTER SUR LE PORT 8080 ★
-RUN sed -i 's/Listen 80/Listen 8080/g' /etc/apache2/ports.conf \
-    && sed -i 's/:80>/:8080>/g' /etc/apache2/sites-available/000-default.conf \
-    && echo "ServerName localhost" >> /etc/apache2/apache2.conf
-
-
 # Métadonnées
 LABEL maintainer="contact@nbility.fr"
 LABEL version="2.0.0"
@@ -43,58 +37,59 @@ RUN apt-get update && apt-get install -y \
     default-mysql-client \
     # Outils de monitoring
     htop \
-    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # Installation des extensions PHP
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-    pdo \
-    pdo_mysql \
-    mysqli \
-    zip \
-    gd \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath \
-    intl \
-    opcache \
-    soap
+        pdo \
+        pdo_mysql \
+        mysqli \
+        zip \
+        gd \
+        mbstring \
+        intl \
+        opcache \
+        exif \
+        bcmath
 
-# Configuration Apache
-RUN a2enmod rewrite headers expires deflate ssl \
-    && sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
-    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+# Configuration PHP - OPcache
+RUN { \
+        echo 'opcache.memory_consumption=128'; \
+        echo 'opcache.interned_strings_buffer=8'; \
+        echo 'opcache.max_accelerated_files=4000'; \
+        echo 'opcache.revalidate_freq=2'; \
+        echo 'opcache.fast_shutdown=1'; \
+        echo 'opcache.enable_cli=0'; \
+    } > /usr/local/etc/php/conf.d/opcache-recommended.ini
 
-# Copier la configuration PHP personnalisée
-COPY php.ini /usr/local/etc/php/conf.d/custom.ini
+# Configuration PHP - Uploads et limites
+RUN { \
+        echo 'upload_max_filesize=50M'; \
+        echo 'post_max_size=50M'; \
+        echo 'max_execution_time=300'; \
+        echo 'memory_limit=256M'; \
+        echo 'date.timezone=Europe/Paris'; \
+    } > /usr/local/etc/php/conf.d/uploads.ini
 
-# Créer les répertoires nécessaires
-RUN mkdir -p /var/www/html/logs \
-    && mkdir -p /var/www/html/cache \
-    && mkdir -p /var/www/html/uploads \
-    && mkdir -p /var/www/html/backups \
-    && chown -R www-data:www-data /var/www/html \
+# Création du dossier de sessions PHP et permissions
+RUN mkdir -p /var/lib/php/sessions \
+    && chown -R www-data:www-data /var/lib/php/sessions \
+    && chmod 1733 /var/lib/php/sessions
+
+# Configuration Apache - activation des modules
+RUN a2enmod rewrite headers expires deflate
+
+# Permissions sur le répertoire web
+RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
-# Configuration des permissions
-RUN usermod -u 1000 www-data \
-    && groupmod -g 1000 www-data
+# Port exposé
+EXPOSE 80
 
 # Healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost/health.php || exit 1
-
-# Exposition du port
-EXPOSE 8080
-
-# Point d'entrée
-WORKDIR /var/www/html
 
 # Démarrage Apache en foreground
 CMD ["apache2-foreground"]
-
-# ═══════════════════════════════════════════════════════════════════════════
-# FIN DU DOCKERFILE
-# ═══════════════════════════════════════════════════════════════════════════
