@@ -1,4 +1,14 @@
 #!/bin/bash
+clear
+
+# Couleurs
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
+NC='\033[0m'
 
 echo "═══════════════════════════════════════════════════════════"
 echo "     DIAGNOSTIC BOLT.DIY-INTRANET - VERSION ÉTENDUE"
@@ -206,6 +216,14 @@ source .env
 # Utiliser la variable directement
 docker compose exec -T mariadb mariadb -uroot -p"${MARIADB_ROOT_PASSWORD}" \
   -e "DESCRIBE usermanager.um_users;"
+
+    # --- TABLEAU DES COMPTES CREER DANS MARIABD ---
+    echo ""
+    echo -e "   ${YELLOW}TABLEAU DES COMPTES CREER DANS MARIABD :${NC}"
+    set -o allexport
+    source .env
+    set +o allexport
+    docker compose exec mariadb mariadb -u$DB_USER -p$DB_PASSWORD -h$DB_HOST -D $DB_NAME -e "SELECT id, username, email, role, status FROM um_users;"
 
 echo "═══════════════════════════════════════════════════════════"
 echo "                  FIN DU DIAGNOSTIC"

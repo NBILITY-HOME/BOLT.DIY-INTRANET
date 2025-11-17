@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Recherche par username au lieu d'email
             $stmt = $pdo->prepare(
-                'SELECT id, username, email, password_hash, is_active FROM users WHERE username = :username LIMIT 1'
+                'SELECT id, username, email, password_hash, is_active FROM um_users WHERE username = :username LIMIT 1'
             );
             $stmt->execute(['username' => $username]);
             $user = $stmt->fetch();
