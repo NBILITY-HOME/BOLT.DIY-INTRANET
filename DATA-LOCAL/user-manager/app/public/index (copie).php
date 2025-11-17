@@ -96,7 +96,7 @@ switch ($endpoint) {
         if ($resource === 'index.php' || $resource === 'index' || $resource === null) {
             $isLoggedIn = !empty($_SESSION['user_id']);
             if (!$isLoggedIn) {
-                header('Location: /login.php');
+                header('Location: /public/login.php');
                 exit;
             }
             // Connecté : on sert le dashboard
@@ -129,12 +129,12 @@ switch ($endpoint) {
         $isLoggedIn = !empty($_SESSION['user_id']);
 
         if (!$isLoggedIn) {
-            header('Location: /login.php');
+            header('Location: /public/login.php');
             exit;
         }
 
         // Connecté → dashboard
-        header('Location: /index.html');
+        header('Location: /public/index.html');
         exit;
 
     // ───────────────────────────────────────────────────────
@@ -159,7 +159,7 @@ switch ($endpoint) {
         <body>
             <h1>404 – Page non trouvée</h1>
             <p>La ressource demandée n'existe pas.</p>
-            <a href="/login.php">← Retour au login</a>
+            <p><a href="/public/login.php">← Retour au login</a></p>
         </body>
         </html>
         <?php
