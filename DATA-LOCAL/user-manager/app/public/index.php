@@ -96,11 +96,11 @@ switch ($endpoint) {
         if ($resource === 'index.php' || $resource === 'index' || $resource === null) {
             $isLoggedIn = !empty($_SESSION['user_id']);
             if (!$isLoggedIn) {
-                header('Location: /public/login.php');
+                header('Location: /public/login.html');
                 exit;
             }
             // Connecté : on sert le dashboard
-            $dashboardFile = __DIR__ . '/index.html';
+            $dashboardFile = __DIR__ . '/index.php';
             if (file_exists($dashboardFile)) {
                 header('Content-Type: text/html; charset=utf-8');
                 readfile($dashboardFile);
@@ -129,12 +129,12 @@ switch ($endpoint) {
         $isLoggedIn = !empty($_SESSION['user_id']);
 
         if (!$isLoggedIn) {
-            header('Location: /public/login.php');
+            header('Location: /public/login.html');
             exit;
         }
 
         // Connecté → dashboard
-        header('Location: /public/index.html');
+        header('Location: /public/index.php');
         exit;
 
     // ───────────────────────────────────────────────────────
@@ -159,7 +159,7 @@ switch ($endpoint) {
         <body>
             <h1>404 – Page non trouvée</h1>
             <p>La ressource demandée n'existe pas.</p>
-            <p><a href="/public/login.php">← Retour au login</a></p>
+            <p><a href="/public/login.html">← Retour au login</a></p>
         </body>
         </html>
         <?php
