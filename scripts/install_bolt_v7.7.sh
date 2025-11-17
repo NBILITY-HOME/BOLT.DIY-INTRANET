@@ -3,8 +3,8 @@
 set -e
 
 # ═══════════════════════════════════════════════════════════════════════════
-# BOLT.DIY INTRANET - Installation complète v7.7
-# CORRECTIF: Création de l'utilisateur admin dans la base de données
+# BOLT.DIY INTRANET - Installation complète v7.7 FINAL
+# Respecte l'arborescence GitHub + Création auto de l'utilisateur admin
 # © Copyright Nbility 2025 - contact@nbility.fr
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -15,7 +15,7 @@ DATA_LOCAL_DIR="$PROJECT_ROOT/DATA-LOCAL"
 NGINX_DIR="$DATA_LOCAL_DIR/nginx"
 MARIADB_DIR="$DATA_LOCAL_DIR/mariadb"
 USERMANAGER_DIR="$DATA_LOCAL_DIR/user-manager"
-BOLTDIY_DIR="$DATA_LOCAL_DIR/bolt.diy"
+BOLTDIY_DIR="$PROJECT_ROOT/bolt.diy"  # ← À la racine, pas dans DATA-LOCAL !
 
 # GitHub
 GITHUB_REPO="https://github.com/NBILITY-HOME/BOLT.DIY-INTRANET.git"
@@ -57,8 +57,7 @@ print_banner() {
     echo -e "${CYAN}║                                                            ║${NC}"
     echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    echo -e "${BLUE}         NBILITY EDITION - Installation v7.7${NC}"
-    echo -e "${BLUE}         FIX: Création automatique de l'admin${NC}"
+    echo -e "${BLUE}         Installation v7.7 - Arborescence GitHub${NC}"
     echo -e "${CYAN}════════════════════════════════════════════════════════════${NC}"
     echo ""
 }
@@ -301,11 +300,60 @@ clone_repository() {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
-# CRÉATION DES DOSSIERS
+# VÉRIFICATION DES FICHIERS GITHUB
+# ═══════════════════════════════════════════════════════════════════════════
+
+verify_repository_structure() {
+    print_section "VÉRIFICATION ARBORESCENCE GITHUB"
+
+    local all_ok=true
+    local required_files=(
+        "docker-compose.yml"
+        "bolt.diy"
+        "README.md"
+        ".gitignore"
+    )
+
+    print_step "Vérification des fichiers essentiels..."
+
+    for file in "${required_files[@]}"; do
+        if [ -e "$PROJECT_ROOT/$file" ]; then
+            print_success "$file présent"
+        else
+            print_error "$file manquant"
+            all_ok=false
+        fi
+    done
+
+    # Vérification répertoire bolt.diy
+    if [ -d "$BOLTDIY_DIR" ]; then
+        print_success "Dossier bolt.diy/ présent à la racine"
+        print_info "Contenu de bolt.diy/:"
+        ls -1 "$BOLTDIY_DIR" | head -10 | sed 's/^/    /'
+    else
+        print_error "Dossier bolt.diy/ manquant"
+        all_ok=false
+    fi
+
+    if [ "$all_ok" = true ]; then
+        print_success "Structure GitHub validée ✓"
+    else
+        print_error "Structure GitHub incomplète"
+        print_warning "Le repository GitHub semble endommagé"
+        exit 1
+    fi
+}
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CRÉATION DES DOSSIERS DATA-LOCAL
 # ═══════════════════════════════════════════════════════════════════════════
 
 create_directories() {
-    print_section "CRÉATION DES DOSSIERS"
+    print_section "CRÉATION DES DOSSIERS DATA-LOCAL"
+
+    print_step "Création du dossier DATA-LOCAL..."
+    mkdir -p "$DATA_LOCAL_DIR"
+    print_success "DATA-LOCAL créé"
 
     print_step "Création des dossiers MariaDB..."
     mkdir -p "$MARIADB_DIR/data"
@@ -317,6 +365,10 @@ create_directories() {
     mkdir -p "$USERMANAGER_DIR/app/logs"
     mkdir -p "$USERMANAGER_DIR/app/uploads"
     print_success "Dossiers User Manager créés"
+
+    print_step "Création du dossier Nginx..."
+    mkdir -p "$NGINX_DIR"
+    print_success "Dossier Nginx créé"
 
     print_step "Vérification des permissions..."
     chmod -R 755 "$PROJECT_ROOT"
@@ -353,7 +405,7 @@ MARIADB_USER_PASSWORD=$MARIADB_USER_PASSWORD
 
 # Chemins
 NGINX_DIR=./DATA-LOCAL/nginx
-BOLTDIY_DIR=./DATA-LOCAL/bolt.diy
+BOLTDIY_DIR=./bolt.diy
 MARIADB_DIR=./DATA-LOCAL/mariadb
 USERMANAGER_DIR=./DATA-LOCAL/user-manager
 ENV_MAIN_EOF
@@ -363,8 +415,10 @@ ENV_MAIN_EOF
     print_step "Création du fichier .env Bolt.DIY..."
     if [ -f "$BOLTDIY_DIR/.env.example" ]; then
         cp "$BOLTDIY_DIR/.env.example" "$BOLTDIY_DIR/.env"
+        print_info "Copie de .env.example vers .env"
     else
         touch "$BOLTDIY_DIR/.env"
+        print_info "Création d'un fichier .env vide"
     fi
 
     [ -n "$OPENAI_API_KEY" ] && echo "OPENAI_API_KEY=$OPENAI_API_KEY" >> "$BOLTDIY_DIR/.env"
@@ -605,6 +659,34 @@ SQL_EOF
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
+# DÉPLOIEMENT DOCKER
+# ═══════════════════════════════════════════════════════════════════════════
+
+launch_docker() {
+    print_section "DÉPLOIEMENT DOCKER"
+
+    print_step "Positionnement dans le répertoire du projet..."
+    cd "$PROJECT_ROOT" || exit 1
+
+    print_step "Arrêt des conteneurs existants..."
+    docker compose down &>/dev/null || true
+    print_success "Conteneurs arrêtés"
+
+    print_step "Construction et démarrage des conteneurs..."
+    if docker compose up -d --build; then
+        print_success "Conteneurs démarrés avec succès"
+    else
+        print_error "Échec du démarrage des conteneurs"
+        print_info "Consultez les logs avec: docker compose logs -f"
+        exit 1
+    fi
+
+    print_step "Vérification de l'état des conteneurs..."
+    docker compose ps
+    print_success "Déploiement terminé"
+}
+
+# ═══════════════════════════════════════════════════════════════════════════
 # CRÉATION DE L'UTILISATEUR ADMIN
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -657,34 +739,6 @@ SQL_EOF
         print_error "Échec de la création de l'utilisateur admin"
         exit 1
     fi
-}
-
-# ═══════════════════════════════════════════════════════════════════════════
-# DÉPLOIEMENT DOCKER
-# ═══════════════════════════════════════════════════════════════════════════
-
-launch_docker() {
-    print_section "DÉPLOIEMENT DOCKER"
-
-    print_step "Positionnement dans le répertoire du projet..."
-    cd "$PROJECT_ROOT" || exit 1
-
-    print_step "Arrêt des conteneurs existants..."
-    docker compose down &>/dev/null || true
-    print_success "Conteneurs arrêtés"
-
-    print_step "Construction et démarrage des conteneurs..."
-    if docker compose up -d --build; then
-        print_success "Conteneurs démarrés avec succès"
-    else
-        print_error "Échec du démarrage des conteneurs"
-        print_info "Consultez les logs avec: docker compose logs -f"
-        exit 1
-    fi
-
-    print_step "Vérification de l'état des conteneurs..."
-    docker compose ps
-    print_success "Déploiement terminé"
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -751,12 +805,13 @@ main() {
     check_dependencies
     collect_user_inputs
     clone_repository
+    verify_repository_structure  # ← NOUVELLE fonction de vérification
     create_directories
     generate_env_files
     generate_htpasswd
     configure_sql
     launch_docker
-    create_admin_user  # ← NOUVEAU: Création de l'admin après démarrage de Docker
+    create_admin_user
     print_summary
 }
 
