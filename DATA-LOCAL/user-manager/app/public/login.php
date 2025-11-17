@@ -7,27 +7,27 @@ session_start();
  * Si déjà connecté, on renvoie vers le dashboard.
  */
 if (!empty($_SESSION['user_id'])) {
-    header('Location: /user-manager/public/index.php');
+    header('Location: /public/index.php');
     exit;
 }
 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email    = trim($_POST['email'] ?? '');
+    $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if ($email === '' || $password === '') {
-        $error = 'Merci de renseigner email et mot de passe.';
+    if ($username === '' || $password === '') {
+        $error = 'Merci de renseigner votre nom d\'utilisateur et mot de passe.';
     } else {
-        // Connexion à MariaDB – à adapter si besoin aux variables d’environnement réelles
-        $dsn      = sprintf(
+        // Connexion à MariaDB
+        $dsn = sprintf(
             'mysql:host=%s;dbname=%s;charset=utf8mb4',
             getenv('MARIADB_HOST') ?: 'mariadb',
             getenv('MARIADB_DATABASE') ?: 'user_manager'
         );
-        $dbUser   = getenv('MARIADB_USER') ?: 'user_manager';
-        $dbPass   = getenv('MARIADB_PASSWORD') ?: 'change_me';
+        $dbUser = getenv('MARIADB_USER') ?: 'user_manager';
+        $dbPass = getenv('MARIADB_PASSWORD') ?: 'change_me';
 
         try {
             $pdo = new PDO($dsn, $dbUser, $dbPass, [
@@ -35,14 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             ]);
 
-            // Exemple de schéma : table users(id, email, password_hash, is_active, is_super_admin, ...)
+            // Recherche par username au lieu d'email
             $stmt = $pdo->prepare(
-                'SELECT id, email, password_hash, is_active
+                'SELECT id, username, email, password_hash, is_active
                  FROM users
-                 WHERE email = :email
+                 WHERE username = :username
                  LIMIT 1'
             );
-            $stmt->execute(['email' => $email]);
+            $stmt->execute(['username' => $username]);
             $user = $stmt->fetch();
 
             if (!$user || !$user['is_active']) {
@@ -50,17 +50,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif (!password_verify($password, $user['password_hash'])) {
                 $error = 'Mot de passe incorrect.';
             } else {
-                // Auth OK : on initialise la session
-                $_SESSION['user_id']    = (int) $user['id'];
-                $_SESSION['user_email'] = $user['email'];
+                // Authentification OK → créer la session
+                $_SESSION['user_id']    = $user['id'];
+                $_SESSION['username']   = $user['username'];
+                $_SESSION['email']      = $user['email'];
 
                 // Redirection vers le dashboard
-                header('Location: /user-manager/public/index.php');
+                header('Location: /public/index.php');
                 exit;
             }
-        } catch (Throwable $e) {
-            // En production, loguer le détail dans un fichier plutôt que l’afficher
-            $error = "Erreur de connexion au service d'authentification.";
+        } catch (PDOException $e) {
+            $error = 'Erreur de connexion à la base de données.';
+            error_log('Login DB error: ' . $e->getMessage());
         }
     }
 }
@@ -69,50 +70,119 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>User Manager – Connexion</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Tu peux replacer ici tes <link> CSS actuels -->
-    <link rel="stylesheet" href="/user-manager/public/css/style.css">
+    <title>Connexion - User Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 420px;
+        }
+        h1 {
+            color: #2d3748;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            border-left: 4px solid #c53030;
+        }
+    </style>
 </head>
 <body>
-    <main class="auth-layout">
-        <section class="auth-card">
-            <h1>Connexion au User Manager</h1>
+    <div class="login-container">
+        <h1>Connexion au User Manager</h1>
 
-            <?php if ($error !== ''): ?>
-                <div class="alert alert-error">
-                    <?= htmlspecialchars($error, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>
-                </div>
-            <?php endif; ?>
+        <?php if ($error): ?>
+            <div class="error"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
 
-            <form method="post" action="/user-manager/public/login.php" class="auth-form" autocomplete="off">
-                <div class="form-group">
-                    <label for="email">Adresse e-mail</label>
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        required
-                        value="<?= htmlspecialchars($email ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?>"
-                    >
-                </div>
+        <form method="POST" action="">
+            <div class="form-group">
+                <label for="username">Nom d'utilisateur</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value="<?= htmlspecialchars($_POST['username'] ?? '') ?>"
+                    required
+                    autofocus
+                >
+            </div>
 
-                <div class="form-group">
-                    <label for="password">Mot de passe</label>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        required
-                    >
-                </div>
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                >
+            </div>
 
-                <button type="submit" class="btn btn-primary">
-                    Se connecter
-                </button>
-            </form>
-        </section>
-    </main>
+            <button type="submit">Se connecter</button>
+        </form>
+    </div>
 </body>
 </html>
