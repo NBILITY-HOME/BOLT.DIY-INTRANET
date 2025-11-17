@@ -1,20 +1,21 @@
 # ═══════════════════════════════════════════════════════════════════════════
-# BOLT.DIY USER MANAGER v2.0 - Dockerfile
+# BOLT.DIY USER MANAGER v2.0 - Dockerfile CORRIGÉ
 # © Copyright Nbility 2025 - contact@nbility.fr
 # PHP 8.2 + Apache + Extensions optimisées
+# FIX: DocumentRoot configuré pour /var/www/html/public
 # ═══════════════════════════════════════════════════════════════════════════
 
 FROM php:8.2-apache
 
 # Métadonnées
 LABEL maintainer="contact@nbility.fr"
-LABEL version="2.0.0"
+LABEL version="2.0.1"
 LABEL description="Bolt.DIY User Manager - Interface de gestion des utilisateurs"
 
 # Variables d'environnement
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/Paris
-ENV APACHE_DOCUMENT_ROOT=/var/www/html
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 # Installation des dépendances système
 RUN apt-get update && apt-get install -y \
@@ -77,19 +78,41 @@ RUN mkdir -p /var/lib/php/sessions \
     && chown -R www-data:www-data /var/lib/php/sessions \
     && chmod 1733 /var/lib/php/sessions
 
-# Configuration Apache - activation des modules
+# ═══════════════════════════════════════════════════════════════════════════
+# CORRECTIF: Configuration Apache pour /var/www/html/public
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Activer les modules Apache nécessaires
 RUN a2enmod rewrite headers expires deflate
 
-# Permissions sur le répertoire web
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
+# Configurer le DocumentRoot vers /public
+RUN sed -i 's|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g' /etc/apache2/sites-available/000-default.conf && \
+    sed -i 's|<Directory /var/www/html>|<Directory /var/www/html/public>|g' /etc/apache2/sites-available/000-default.conf && \
+    echo "ServerName localhost" >> /etc/apache2/apache2.conf
+
+# Créer le répertoire public et configurer les permissions
+RUN mkdir -p /var/www/html/public && \
+    chown -R www-data:www-data /var/www/html && \
+    chmod -R 755 /var/www/html
+
+# Créer un .htaccess pour le routing PHP
+RUN echo '<IfModule mod_rewrite.c>\n\
+    RewriteEngine On\n\
+    RewriteBase /\n\
+    RewriteCond %{REQUEST_FILENAME} !-f\n\
+    RewriteCond %{REQUEST_FILENAME} !-d\n\
+    RewriteRule ^(.*)$ index.php [QSA,L]\n\
+</IfModule>\n\
+\n\
+DirectoryIndex index.php index.html' > /var/www/html/public/.htaccess && \
+    chown www-data:www-data /var/www/html/public/.htaccess
 
 # Port exposé
 EXPOSE 80
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health.php || exit 1
+# Healthcheck (vérifie que Apache répond)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost/ || exit 1
 
 # Démarrage Apache en foreground
 CMD ["apache2-foreground"]
