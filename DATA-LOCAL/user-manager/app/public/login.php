@@ -11,7 +11,7 @@ session_start();
 
 // Si déjà connecté, rediriger vers le dashboard
 if (!empty($_SESSION['user_id'])) {
-    header('Location: /index.php');
+    header('Location: /user-manager/index.php');
     exit;
 }
 
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['email'] = $user['email'];
 
                 // ✅ CORRECTION : Redirection vers le dashboard
-                header('Location: /index.php');
+                header('Location: /user-manager/index.php');
                 exit;
             }
         } catch (PDOException $e) {

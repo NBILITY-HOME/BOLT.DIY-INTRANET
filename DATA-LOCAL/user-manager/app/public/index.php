@@ -1,107 +1,153 @@
 <?php
-// /var/www/html/public/index.php
 declare(strict_types=1);
-
 session_start();
 
-// Vérifier si l'utilisateur est connecté
-if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+// ═══════════════════════════════════════════════════════════════
+// FONCTIONS UTILITAIRES
+// ═══════════════════════════════════════════════════════════════
+function jsonResponse(array $data, int $statusCode = 200): void {
+    http_response_code($statusCode);
+    header('Content-Type: application/json');
+    echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-// Charger la configuration
-require_once __DIR__ . '/../config/database.php';
+// ═══════════════════════════════════════════════════════════════
+// ROUTAGE BASÉ SUR REQUEST_URI
+// ═══════════════════════════════════════════════════════════════
+$requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+$path = parse_url($requestUri, PHP_URL_PATH);
 
-try {
-    $pdo = getDbConnection();
-
-    // Récupérer les informations de l'utilisateur connecté
-    $stmt = $pdo->prepare('SELECT username, email, role FROM um_users WHERE id = :id');
-    $stmt->execute(['id' => $_SESSION['user_id']]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$user) {
-        session_destroy();
-        header('Location: login.php');
-        exit;
-    }
-
-    // Récupérer la liste des utilisateurs (admin uniquement)
-    $users = [];
-    if (in_array($user['role'], ['admin', 'superadmin'])) {
-        $stmt = $pdo->query('
-            SELECT id, username, email, role, status,
-                   DATE_FORMAT(created_at, "%Y-%m-%d %H:%i") as created_at,
-                   DATE_FORMAT(last_login, "%Y-%m-%d %H:%i") as last_login
-            FROM um_users
-            ORDER BY created_at DESC
-        ');
-        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-} catch (PDOException $e) {
-    error_log('Database error: ' . $e->getMessage());
-    $error = 'Erreur de connexion à la base de données';
+// Nettoyage : on supprime le slash final sauf pour '/'
+if ($path !== '/' && str_ends_with($path, '/')) {
+    $path = rtrim($path, '/');
 }
-?>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestion des utilisateurs - Bolt.DIY</title>
-    <link rel="stylesheet" href="/user-manager/assets/css/style.css">
-</head>
-<body>
-    <div class="container">
-        <header class="page-header">
-            <h1>🔐 Gestion des utilisateurs</h1>
-            <div class="user-info">
-                <span>Connecté en tant que: <strong><?= htmlspecialchars($user['username']) ?></strong> (<?= htmlspecialchars($user['role']) ?>)</span>
-                <a href="logout.php" class="btn btn-secondary">Déconnexion</a>
-            </div>
-        </header>
 
-        <?php if (isset($error)): ?>
-            <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
-        <?php endif; ?>
+// Découpage en segments (filtrage des vides)
+$segments = explode('/', $path);
+$segments = array_filter($segments, fn($s) => $s !== '');
+$segments = array_values($segments);
 
-        <?php if (!empty($users)): ?>
-            <section class="users-section">
-                <h2>Liste des utilisateurs (<?= count($users) ?>)</h2>
-                <div class="table-container">
-                    <table class="users-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nom d'utilisateur</th>
-                                <th>Email</th>
-                                <th>Rôle</th>
-                                <th>Statut</th>
-                                <th>Créé le</th>
-                                <th>Dernière connexion</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($users as $u): ?>
-                                <tr>
-                                    <td><?= htmlspecialchars((string)$u['id']) ?></td>
-                                    <td><?= htmlspecialchars($u['username']) ?></td>
-                                    <td><?= htmlspecialchars($u['email']) ?></td>
-                                    <td><span class="badge badge-<?= strtolower($u['role']) ?>"><?= htmlspecialchars($u['role']) ?></span></td>
-                                    <td><span class="badge badge-<?= strtolower($u['status']) ?>"><?= htmlspecialchars($u['status']) ?></span></td>
-                                    <td><?= htmlspecialchars($u['created_at'] ?? 'N/A') ?></td>
-                                    <td><?= htmlspecialchars($u['last_login'] ?? 'Jamais') ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        <?php else: ?>
-            <div class="alert alert-info">Vous n'avez pas les permissions pour voir les utilisateurs.</div>
-        <?php endif; ?>
-    </div>
-</body>
-</html>
+$endpoint = $segments[0] ?? '';
+$resource = $segments[1] ?? null;
+$id = $segments[2] ?? null;
+
+// ───────────────────────────────────────────────────────────────
+// ROUTAGE PRINCIPAL
+// ───────────────────────────────────────────────────────────────
+switch ($endpoint) {
+    // ─────────────────────────────────────────────────────
+    // ENDPOINT: /api/*
+    // ─────────────────────────────────────────────────────
+    case 'api':
+        if ($resource === null) {
+            jsonResponse([
+                'status' => 'success',
+                'message' => 'Bolt.DIY User Manager API v2.0',
+                'version' => '2.0.0',
+                'endpoints' => [
+                    '/api/auth/login' => 'POST - Authentification',
+                    '/api/auth/logout' => 'POST - Déconnexion',
+                    '/api/users' => 'GET - Liste des utilisateurs',
+                    '/api/groups' => 'GET - Liste des groupes',
+                    '/api/permissions' => 'GET - Permissions',
+                    '/api/audit' => 'GET - Logs d\'audit',
+                ],
+            ]);
+        }
+
+        // Pour l'instant, on retourne un message "non implémenté"
+        jsonResponse([
+            'status' => 'error',
+            'message' => 'API endpoint not yet implemented',
+            'requested' => $resource,
+        ], 501);
+        break;
+
+    // ─────────────────────────────────────────────────────
+    // ENDPOINT: /health (healthcheck Docker)
+    // ─────────────────────────────────────────────────────
+    case 'health':
+    case 'health.php':
+        jsonResponse([
+            'status' => 'healthy',
+            'service' => 'bolt-user-manager',
+            'version' => '2.0.0',
+            'timestamp' => date('Y-m-d H:i:s'),
+        ]);
+        break;
+
+    // ─────────────────────────────────────────────────────
+    // ENDPOINT: /public/* (fichiers statiques + garde auth)
+    // ─────────────────────────────────────────────────────
+    case 'public':
+        // Si on demande public/index.php ou public/index, on applique la garde
+        if ($resource === 'index.php' || $resource === 'index' || $resource === null) {
+            $isLoggedIn = !empty($_SESSION['user_id']);
+
+            if (!$isLoggedIn) {
+                header('Location: /user-manager/login.php');  // ✅ CORRIGÉ (était /user-manager/login.php)
+                exit;
+            }
+
+            // Connecté : on sert le dashboard
+            $dashboardFile = __DIR__ . '/index.html';
+            if (file_exists($dashboardFile)) {
+                header('Content-Type: text/html; charset=utf-8');
+                readfile($dashboardFile);
+                exit;
+            }
+        }
+
+        // Sinon Apache sert directement les fichiers statiques
+        break;
+
+    // ─────────────────────────────────────────────────────
+    // ENDPOINT: / ou vide (racine)
+    // ─────────────────────────────────────────────────────
+    case '':
+    case 'index':
+    case 'index.php':
+        // Si demande explicite JSON
+        if (strpos($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json') !== false) {
+            jsonResponse([
+                'status' => 'success',
+                'message' => 'Bolt.DIY User Manager v2.0',
+                'api_endpoint' => '/api',
+            ]);
+        }
+
+        // Requête web : protection par session
+        $isLoggedIn = !empty($_SESSION['user_id']);
+
+        if (!$isLoggedIn) {
+            header('Location: login.php');  // ✅ CORRIGÉ (était /login.php)
+            exit;
+        }
+
+        // Connecté → dashboard
+        header('Location: index.html');
+        exit;
+
+    // ─────────────────────────────────────────────────────
+    // DEFAULT: 404
+    // ─────────────────────────────────────────────────────
+    default:
+        header('Content-Type: text/html; charset=utf-8');
+        http_response_code(404);
+        ?>
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <title>404 - Page non trouvée</title>
+        </head>
+        <body>
+            <h1>404 - Page non trouvée</h1>
+            <p>La ressource demandée n'existe pas.</p>
+            <a href="login.php">← Retour au login</a>
+        </body>
+        </html>
+        <?php
+        exit;
+}

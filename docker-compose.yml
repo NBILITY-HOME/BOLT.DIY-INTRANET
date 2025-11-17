@@ -13,6 +13,7 @@ services:
       - ${NGINX_DIR}/nginx.conf:/etc/nginx/nginx.conf:ro
       - ${NGINX_DIR}/html:/usr/share/nginx/html:ro
       - ${NGINX_DIR}/.htpasswd:/etc/nginx/.htpasswd:ro
+      - ${USERMANAGER_DIR}/app/public/assets:/var/www/html/public/assets:ro
     depends_on:
       - bolt
       - user-manager
