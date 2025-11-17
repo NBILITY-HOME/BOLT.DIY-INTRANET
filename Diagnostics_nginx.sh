@@ -199,6 +199,14 @@ echo "────────────────────────�
 docker exec bolt-nginx nginx -t
 echo ""
 
+echo "26  schéma exact de la table um_users"
+echo "────────────────────────────────────────────────────────────"
+# Charger le .env dans l'environnement shell
+source .env
+# Utiliser la variable directement
+docker compose exec -T mariadb mariadb -uroot -p"${MARIADB_ROOT_PASSWORD}" \
+  -e "DESCRIBE usermanager.um_users;"
+
 echo "═══════════════════════════════════════════════════════════"
 echo "                  FIN DU DIAGNOSTIC"
 echo "═══════════════════════════════════════════════════════════"
