@@ -7,24 +7,6 @@
 USE bolt_usermanager;
 
 -- ═══════════════════════════════════════════════════════════════════════════
--- Utilisateur administrateur par défaut
--- Password: admin (à changer après installation)
--- ═══════════════════════════════════════════════════════════════════════════
-INSERT INTO users (username, email, password, first_name, last_name, role, status) 
-VALUES (
-    'admin',
-    'admin@localhost',
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- password: admin
-    'Admin',
-    'System',
-    'super_admin',
-    'active'
-) ON DUPLICATE KEY UPDATE 
-    email = VALUES(email),
-    role = VALUES(role),
-    status = VALUES(status);
-
--- ═══════════════════════════════════════════════════════════════════════════
 -- Groupes par défaut
 -- ═══════════════════════════════════════════════════════════════════════════
 INSERT INTO groups (name, description, color) VALUES
