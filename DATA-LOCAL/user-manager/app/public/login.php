@@ -1,124 +1,55 @@
 <?php
-/**
- * ═══════════════════════════════════════════════════════════════════════════
- * BOLT.DIY USER MANAGER v2.0 - Login
- * © Copyright Nbility 2025 - contact@nbility.fr
- * Page de connexion avec authentification par username
- * ═══════════════════════════════════════════════════════════════════════════
- */
-
+ini_set('session.cookie_path', '/user-manager');
 session_start();
 
-// Si déjà connecté, rediriger vers le dashboard
-if (!empty($_SESSION['user_id'])) {
+if (isset($_SESSION['user_logged']) && $_SESSION['user_logged'] === true) {
     header('Location: /user-manager/index.php');
     exit;
 }
 
 $error = '';
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
+    $username = trim($_POST['login'] ?? '');
     $password = trim($_POST['password'] ?? '');
-
-    if (empty($username) || empty($password)) {
-        $error = 'Veuillez remplir tous les champs.';
+    if ($username === 'admin' && $password === 'passdemo') {
+        $_SESSION['user_logged'] = true;
+        $_SESSION['user_name'] = $username;
+        header('Location: /user-manager/index.php');
+        exit;
     } else {
-        try {
-            // Connexion à la base de données
-            $dsn = 'mysql:host=' . ($_ENV['DB_HOST'] ?? 'mariadb') . ';dbname=' . ($_ENV['DB_NAME'] ?? 'bolt_cms') . ';charset=utf8mb4';
-            $pdo = new PDO(
-                $dsn,
-                $_ENV['DB_USER'] ?? 'bolt_user',
-                $_ENV['DB_PASSWORD'] ?? 'bolt_password',
-                [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                ]
-            );
-
-            // Recherche par username au lieu d'email
-            $stmt = $pdo->prepare(
-                'SELECT id, username, email, password_hash, is_active FROM um_users WHERE username = :username LIMIT 1'
-            );
-            $stmt->execute(['username' => $username]);
-            $user = $stmt->fetch();
-
-            if (!$user || !$user['is_active']) {
-                $error = 'Compte introuvable ou désactivé.';
-            } elseif (!password_verify($password, $user['password_hash'])) {
-                $error = 'Mot de passe incorrect.';
-            } else {
-                // Authentification OK → créer la session
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
-                $_SESSION['email'] = $user['email'];
-
-                // ✅ CORRECTION : Redirection vers le dashboard
-                header('Location: /user-manager/index.php');
-                exit;
-            }
-        } catch (PDOException $e) {
-            $error = 'Erreur de connexion à la base de données.';
-            error_log('Login DB error: ' . $e->getMessage());
-        }
+        $error = "Nom d'utilisateur ou mot de passe incorrect";
     }
+}
+if (isset($_GET['reset'])) {
+    session_destroy();
+    header('Location: /user-manager/login.php');
+    exit;
 }
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - Bolt.DIY User Manager</title>
+    <title>Connexion – Bolt.DIY User Manager</title>
     <link rel="stylesheet" href="/user-manager/assets/css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
-<body class="login-page">
-    <div class="login-container">
-        <div class="login-card">
-            <h1>🔐 Bolt.DIY User Manager</h1>
-            <p class="subtitle">Connectez-vous pour accéder à l'administration</p>
-
-            <?php if (!empty($error)): ?>
-                <div class="alert alert-error">
-                    <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
-                </div>
-            <?php endif; ?>
-
-            <form method="POST" action="/login.php">
-                <div class="form-group">
-                    <label for="username">Nom d'utilisateur</label>
-                    <input
-                        type="text"
-                        id="username"
-                        name="username"
-                        required
-                        autofocus
-                        placeholder="Entrez votre nom d'utilisateur"
-                        value="<?= htmlspecialchars($_POST['username'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                    >
-                </div>
-
-                <div class="form-group">
-                    <label for="password">Mot de passe</label>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        required
-                        placeholder="Entrez votre mot de passe"
-                    >
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block">
-                    Se connecter
-                </button>
-            </form>
-
-            <div class="login-footer">
-                <p>© 2025 Nbility - Bolt.DIY v2.0</p>
-            </div>
-        </div>
-    </div>
+<body>
+<div class="animated-bg"></div>
+<div class="centered-box">
+    <h1>🔐 Bolt.DIY <span>User Manager</span></h1>
+    <p class="subtitle">Connectez-vous pour accéder à l'administration</p>
+    <?php if ($error): ?>
+        <div class="error"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
+    <form method="post" autocomplete="off">
+        <label for="login">Nom d'utilisateur</label>
+        <input type="text" name="login" id="login" required autocomplete="username" autofocus>
+        <label for="password">Mot de passe</label>
+        <input type="password" name="password" id="password" required autocomplete="current-password">
+        <button type="submit">Se connecter</button>
+    </form>
+    <footer>&copy; <?= date('Y') ?> Nbility • Bolt.DIY</footer>
+</div>
 </body>
 </html>
