@@ -43,13 +43,12 @@ L'interface devra fonctionner dans l'architecture Docker actuelle décrite dans 
 Les pages du module User Manager seront servies sous le préfixe `/user-manager` :
 
 ```
-http://VOTRE_IP:8080/user-manager/
+http://VOTRE_IP:$port/user-manager/
 ```
 
 ### ⚠️ CONTRAINTE CRITIQUE : URLs absolues
 
 **Tous les liens vers les ressources statiques** (CSS, JS, images) devront **impérativement** utiliser des URLs absolues :
-
 ✅ **CORRECT :**
 ```html
 <link rel="stylesheet" href="/user-manager/assets/css/style.css">
