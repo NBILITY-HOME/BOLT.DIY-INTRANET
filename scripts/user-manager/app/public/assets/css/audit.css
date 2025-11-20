@@ -1,0 +1,606 @@
+/* ============================================
+   Bolt.DIY User Manager - Audit CSS
+   Version: 1.0
+   Date: 19 novembre 2025
+   ============================================ */
+
+/* ============================================
+   AUDIT STATS
+   ============================================ */
+
+.audit-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.audit-stat-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-lg);
+    transition: all 0.3s ease;
+}
+
+.audit-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    border-color: var(--primary-color);
+}
+
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.stat-icon.primary {
+    background: var(--gradient-primary);
+}
+
+.stat-icon.success {
+    background: linear-gradient(135deg, var(--success-color), #00e676);
+}
+
+.stat-icon.warning {
+    background: linear-gradient(135deg, var(--warning-color), #ffd600);
+}
+
+.stat-icon.danger {
+    background: linear-gradient(135deg, var(--danger-color), #ff1744);
+}
+
+.stat-trend {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+}
+
+.stat-trend.up {
+    color: var(--success-color);
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.stat-trend.down {
+    color: var(--danger-color);
+    background: rgba(244, 67, 54, 0.1);
+}
+
+.stat-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* ============================================
+   AUDIT FILTERS
+   ============================================ */
+
+.audit-filters {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.filters-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+/* ============================================
+   AUDIT TABLE
+   ============================================ */
+
+.audit-table-container {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.audit-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.table-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.audit-table-wrapper {
+    overflow-x: auto;
+}
+
+.audit-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.audit-table thead {
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.audit-table th {
+    padding: var(--spacing-md) var(--spacing-lg);
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s ease;
+}
+
+.audit-table th:hover {
+    color: var(--primary-color);
+}
+
+.audit-table th.sortable::after {
+    content: '\f0dc';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    margin-left: 8px;
+    opacity: 0.3;
+    font-size: 10px;
+}
+
+.audit-table th.sort-asc::after {
+    content: '\f0de';
+    opacity: 1;
+    color: var(--primary-color);
+}
+
+.audit-table th.sort-desc::after {
+    content: '\f0dd';
+    opacity: 1;
+    color: var(--primary-color);
+}
+
+.audit-table tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s ease;
+}
+
+.audit-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.audit-table td {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   AUDIT LOG ENTRY
+   ============================================ */
+
+.log-timestamp {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.log-date {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.log-time {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.log-user {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.log-user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+}
+
+.log-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.log-user-name {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.log-user-role {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.log-action {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.log-action.create {
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.log-action.update {
+    background: rgba(33, 150, 243, 0.1);
+    color: var(--info-color);
+    border: 1px solid rgba(33, 150, 243, 0.2);
+}
+
+.log-action.delete {
+    background: rgba(244, 67, 54, 0.1);
+    color: var(--danger-color);
+    border: 1px solid rgba(244, 67, 54, 0.2);
+}
+
+.log-action.login {
+    background: rgba(156, 39, 176, 0.1);
+    color: #ab47bc;
+    border: 1px solid rgba(156, 39, 176, 0.2);
+}
+
+.log-action.logout {
+    background: rgba(255, 152, 0, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(255, 152, 0, 0.2);
+}
+
+.log-action.view {
+    background: rgba(96, 125, 139, 0.1);
+    color: #78909c;
+    border: 1px solid rgba(96, 125, 139, 0.2);
+}
+
+.log-description {
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.log-details {
+    display: inline-block;
+    margin-left: var(--spacing-xs);
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.log-ip {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+}
+
+.log-status {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-size: 13px;
+}
+
+.log-status.success {
+    color: var(--success-color);
+}
+
+.log-status.error {
+    color: var(--danger-color);
+}
+
+.log-status.warning {
+    color: var(--warning-color);
+}
+
+/* ============================================
+   PAGINATION
+   ============================================ */
+
+.audit-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+.pagination-info {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.pagination-controls {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+.pagination-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.pagination-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.pagination-btn.active {
+    background: var(--gradient-primary);
+    border-color: transparent;
+    color: white;
+}
+
+/* ============================================
+   LOG DETAIL MODAL
+   ============================================ */
+
+.log-detail-section {
+    margin-bottom: var(--spacing-lg);
+}
+
+.log-detail-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: var(--spacing-sm);
+}
+
+.log-detail-content {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+}
+
+.log-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.log-detail-row:last-child {
+    border-bottom: none;
+}
+
+.log-detail-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.log-detail-value {
+    font-size: 13px;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.log-changes {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+}
+
+.log-change-item {
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.log-change-item:last-child {
+    border-bottom: none;
+}
+
+.log-change-field {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.log-change-values {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 13px;
+}
+
+.log-change-old {
+    color: var(--danger-color);
+    text-decoration: line-through;
+}
+
+.log-change-new {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+
+.audit-empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl) var(--spacing-xl);
+}
+
+.empty-state-icon {
+    font-size: 64px;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.5;
+}
+
+.empty-state-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.empty-state-description {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 1024px) {
+    .audit-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .filters-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .audit-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filters-actions {
+        flex-direction: column;
+    }
+
+    .filters-actions .btn {
+        width: 100%;
+    }
+
+    .audit-table th,
+    .audit-table td {
+        padding: var(--spacing-sm);
+        font-size: 12px;
+    }
+
+    .log-user {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .audit-pagination {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .pagination-controls {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .table-actions {
+        flex-direction: column;
+    }
+
+    .table-actions .btn {
+        width: 100%;
+    }
+}

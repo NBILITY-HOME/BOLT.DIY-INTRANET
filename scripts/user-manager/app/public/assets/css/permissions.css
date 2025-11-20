@@ -1,0 +1,448 @@
+/* ============================================
+   Bolt.DIY User Manager - Permissions CSS
+   Version: 1.0
+   Date: 19 novembre 2025
+   ============================================ */
+
+/* ============================================
+   PERMISSIONS CONTAINER
+   ============================================ */
+
+.permissions-container {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-xl);
+}
+
+.permissions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.permissions-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.permissions-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: var(--spacing-xs);
+}
+
+.permissions-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+/* ============================================
+   PERMISSIONS TREE
+   ============================================ */
+
+.permissions-tree {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.permission-category {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.permission-category:hover {
+    border-color: rgba(var(--primary-rgb), 0.3);
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.2s ease;
+}
+
+.category-header:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.category-header.active {
+    background: rgba(var(--primary-rgb), 0.1);
+}
+
+.category-toggle {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: transform 0.3s ease;
+}
+
+.category-header.active .category-toggle {
+    transform: rotate(90deg);
+    color: var(--primary-color);
+}
+
+.category-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+}
+
+.category-info {
+    flex: 1;
+}
+
+.category-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.category-description {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.category-stats {
+    display: flex;
+    gap: var(--spacing-lg);
+}
+
+.category-stat {
+    text-align: center;
+}
+
+.category-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.category-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* ============================================
+   PERMISSIONS LIST
+   ============================================ */
+
+.permissions-list {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.permission-category.expanded .permissions-list {
+    max-height: 1000px;
+}
+
+.permission-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+    transition: background 0.2s ease;
+}
+
+.permission-item:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.permission-checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    padding-top: 2px;
+}
+
+.permission-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.permission-details {
+    flex: 1;
+}
+
+.permission-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.permission-code {
+    display: inline-block;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    margin-left: var(--spacing-sm);
+}
+
+.permission-description {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-top: var(--spacing-xs);
+}
+
+.permission-groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+}
+
+.permission-group-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 4px 10px;
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 1px solid rgba(var(--primary-rgb), 0.2);
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.permission-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+/* ============================================
+   MATRIX VIEW
+   ============================================ */
+
+.permissions-matrix {
+    overflow-x: auto;
+    margin-top: var(--spacing-xl);
+}
+
+.matrix-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 800px;
+}
+
+.matrix-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--bg-card);
+    padding: var(--spacing-md);
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border-color);
+    z-index: 10;
+}
+
+.matrix-table thead th:first-child {
+    text-align: left;
+    min-width: 200px;
+}
+
+.matrix-table tbody tr {
+    transition: background 0.2s ease;
+}
+
+.matrix-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.matrix-table tbody td {
+    padding: var(--spacing-md);
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.matrix-table tbody td:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.matrix-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+/* ============================================
+   LEGEND
+   ============================================ */
+
+.permissions-legend {
+    display: flex;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    margin-top: var(--spacing-xl);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.legend-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-sm);
+}
+
+.legend-icon.read {
+    background: var(--info-color);
+}
+
+.legend-icon.write {
+    background: var(--warning-color);
+}
+
+.legend-icon.delete {
+    background: var(--danger-color);
+}
+
+.legend-icon.admin {
+    background: var(--success-color);
+}
+
+/* ============================================
+   QUICK ACTIONS
+   ============================================ */
+
+.quick-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.quick-action-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quick-action-btn:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* ============================================
+   SEARCH & FILTER
+   ============================================ */
+
+.permissions-filters {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.filter-search {
+    flex: 1;
+    position: relative;
+}
+
+.filter-search input {
+    width: 100%;
+    padding-left: 40px;
+}
+
+.filter-search i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.filter-group-select {
+    min-width: 200px;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .permissions-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .permissions-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .permissions-actions .btn {
+        width: 100%;
+    }
+
+    .category-stats {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .permissions-filters {
+        flex-direction: column;
+    }
+
+    .filter-group-select {
+        width: 100%;
+    }
+
+    .quick-actions {
+        flex-wrap: wrap;
+    }
+
+    .permissions-legend {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+}

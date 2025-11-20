@@ -1,0 +1,389 @@
+/* ============================================
+   Bolt.DIY User Manager - Groups CSS
+   Version: 1.0
+   Date: 19 novembre 2025
+   ============================================ */
+
+/* ============================================
+   GROUPS GRID
+   ============================================ */
+
+.groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.group-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-lg);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.group-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.group-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    border-color: var(--primary-color);
+}
+
+.group-card:hover::before {
+    opacity: 1;
+}
+
+.group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+}
+
+.group-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.group-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.group-description {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-md);
+    line-height: 1.5;
+}
+
+.group-stats {
+    display: flex;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.group-stat {
+    flex: 1;
+}
+
+.group-stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}
+
+.group-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.group-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.group-actions .btn {
+    flex: 1;
+}
+
+/* ============================================
+   MEMBERS LIST IN CARD
+   ============================================ */
+
+.group-members-preview {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.members-avatars {
+    display: flex;
+    margin-right: var(--spacing-sm);
+}
+
+.member-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-primary);
+    margin-left: -8px;
+    background: var(--gradient-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.member-avatar:first-child {
+    margin-left: 0;
+}
+
+.member-avatar:hover {
+    transform: scale(1.1) translateY(-2px);
+    z-index: 10;
+}
+
+.members-count {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* ============================================
+   GROUP MODAL
+   ============================================ */
+
+.permissions-section {
+    margin-top: var(--spacing-lg);
+}
+
+.permissions-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+}
+
+.permissions-grid {
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+.permission-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    transition: background 0.2s ease;
+}
+
+.permission-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.permission-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.permission-label {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.permission-description {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* ============================================
+   MEMBERS SELECTOR
+   ============================================ */
+
+.members-selector {
+    margin-top: var(--spacing-lg);
+}
+
+.members-search {
+    position: relative;
+    margin-bottom: var(--spacing-md);
+}
+
+.members-search input {
+    width: 100%;
+    padding-left: 40px;
+}
+
+.members-search i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.members-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-sm);
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.member-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.member-item.selected {
+    background: rgba(var(--primary-rgb), 0.1);
+}
+
+.member-item-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+}
+
+.member-item-info {
+    flex: 1;
+}
+
+.member-item-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.member-item-email {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.member-item-checkbox {
+    width: 20px;
+    height: 20px;
+}
+
+/* ============================================
+   SELECTED MEMBERS TAGS
+   ============================================ */
+
+.selected-members {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.member-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 1px solid rgba(var(--primary-rgb), 0.2);
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.member-tag-remove {
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+}
+
+.member-tag-remove:hover {
+    color: var(--danger-color);
+}
+
+/* ============================================
+   EMPTY STATE
+   ============================================ */
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-3xl) var(--spacing-xl);
+}
+
+.empty-state-icon {
+    font-size: 64px;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.5;
+}
+
+.empty-state-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.empty-state-description {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .groups-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .group-stats {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .group-actions {
+        flex-direction: column;
+    }
+
+    .group-actions .btn {
+        width: 100%;
+    }
+}

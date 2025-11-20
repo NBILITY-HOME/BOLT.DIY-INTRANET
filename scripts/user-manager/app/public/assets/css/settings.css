@@ -1,0 +1,552 @@
+/* ============================================
+   Bolt.DIY User Manager - Settings CSS
+   Version: 1.0
+   Date: 19 novembre 2025
+   ============================================ */
+
+/* ============================================
+   SETTINGS CONTAINER
+   ============================================ */
+
+.settings-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.settings-tabs {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xl);
+    border-bottom: 2px solid var(--border-color);
+}
+
+.settings-tab {
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-muted);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: -2px;
+}
+
+.settings-tab:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.settings-tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.settings-tab i {
+    margin-right: var(--spacing-sm);
+}
+
+/* ============================================
+   SETTINGS SECTIONS
+   ============================================ */
+
+.settings-section {
+    display: none;
+}
+
+.settings-section.active {
+    display: block;
+}
+
+.settings-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+}
+
+.settings-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-card-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.settings-card-description {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.settings-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+/* ============================================
+   SMTP SETTINGS
+   ============================================ */
+
+.smtp-test-section {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+    border: 1px solid var(--border-color);
+}
+
+.smtp-test-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.smtp-test-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--gradient-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+}
+
+.smtp-test-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.smtp-test-description {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-md);
+}
+
+.smtp-test-form {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: flex-end;
+}
+
+.smtp-test-form .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.smtp-test-result {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    display: none;
+}
+
+.smtp-test-result.success {
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    color: var(--success-color);
+    display: block;
+}
+
+.smtp-test-result.error {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    color: var(--danger-color);
+    display: block;
+}
+
+.smtp-test-result i {
+    margin-right: var(--spacing-sm);
+}
+
+/* ============================================
+   SECURITY SETTINGS
+   ============================================ */
+
+.security-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-md);
+    transition: background 0.2s ease;
+}
+
+.security-option:hover {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.security-option-info {
+    flex: 1;
+}
+
+.security-option-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.security-option-description {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.security-option-control {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* ============================================
+   TOGGLE SWITCH
+   ============================================ */
+
+.toggle-switch {
+    position: relative;
+    width: 52px;
+    height: 28px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: 0.3s;
+    border-radius: 34px;
+    border: 1px solid var(--border-color);
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--gradient-primary);
+    border-color: transparent;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+}
+
+/* ============================================
+   PASSWORD POLICY
+   ============================================ */
+
+.password-policy-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.password-policy-label {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.password-policy-input {
+    width: 100px;
+}
+
+/* ============================================
+   SESSION SETTINGS
+   ============================================ */
+
+.session-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.session-info-item {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+}
+
+.session-info-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+}
+
+.session-info-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* ============================================
+   BACKUP SETTINGS
+   ============================================ */
+
+.backup-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--border-color);
+}
+
+.backup-info {
+    flex: 1;
+}
+
+.backup-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.backup-meta {
+    display: flex;
+    gap: var(--spacing-lg);
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.backup-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.backup-schedule {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-lg);
+}
+
+.schedule-option {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) 0;
+}
+
+.schedule-option input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.schedule-option label {
+    flex: 1;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* ============================================
+   ACTION BUTTONS
+   ============================================ */
+
+.settings-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+.danger-zone {
+    background: rgba(244, 67, 54, 0.05);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+}
+
+.danger-zone-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.danger-zone-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(244, 67, 54, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: var(--danger-color);
+}
+
+.danger-zone-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--danger-color);
+}
+
+.danger-zone-description {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-md);
+    line-height: 1.6;
+}
+
+/* ============================================
+   NOTIFICATION BADGE
+   ============================================ */
+
+.setting-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.setting-badge.success {
+    background: rgba(76, 175, 80, 0.1);
+    color: var(--success-color);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+}
+
+.setting-badge.warning {
+    background: rgba(255, 152, 0, 0.1);
+    color: var(--warning-color);
+    border: 1px solid rgba(255, 152, 0, 0.2);
+}
+
+.setting-badge.info {
+    background: rgba(33, 150, 243, 0.1);
+    color: var(--info-color);
+    border: 1px solid rgba(33, 150, 243, 0.2);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .settings-tabs {
+        flex-direction: column;
+        border-bottom: none;
+    }
+
+    .settings-tab {
+        width: 100%;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 0;
+    }
+
+    .settings-tab.active {
+        border-left: 3px solid var(--primary-color);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .settings-card {
+        padding: var(--spacing-lg);
+    }
+
+    .settings-card-header {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .smtp-test-form {
+        flex-direction: column;
+    }
+
+    .security-option {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .backup-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .backup-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .backup-actions .btn {
+        width: 100%;
+    }
+
+    .settings-actions {
+        flex-direction: column;
+    }
+
+    .settings-actions .btn {
+        width: 100%;
+    }
+
+    .session-info {
+        grid-template-columns: 1fr;
+    }
+}

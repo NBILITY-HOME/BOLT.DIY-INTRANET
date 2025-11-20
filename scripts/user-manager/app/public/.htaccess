@@ -1,0 +1,220 @@
+# ============================================
+# Bolt.DIY User Manager - Apache Security
+# Version: 1.0
+# Date: 19 novembre 2025
+# ============================================
+
+# Enable Rewrite Engine
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Force HTTPS
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Block access to sensitive files
+    RewriteRule ^(\.git|\.env|config|vendor|logs|composer\.(json|lock))$ - [F,L]
+</IfModule>
+
+# ============================================
+# SECURITY HEADERS
+# ============================================
+
+<IfModule mod_headers.c>
+    # Prevent MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # XSS Protection
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Prevent clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Referrer Policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Permissions Policy
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    
+    # Content Security Policy
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https:; font-src 'self' https://cdnjs.cloudflare.com;"
+    
+    # Remove server signature
+    Header unset Server
+    Header unset X-Powered-By
+    
+    # HSTS (HTTP Strict Transport Security)
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>
+
+# ============================================
+# DISABLE DIRECTORY LISTING
+# ============================================
+
+Options -Indexes
+
+# ============================================
+# DISABLE SERVER SIGNATURE
+# ============================================
+
+ServerSignature Off
+
+# ============================================
+# PROTECT SENSITIVE FILES
+# ============================================
+
+# Block access to .htaccess
+<Files .htaccess>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Block access to .env files
+<Files .env>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Block access to composer files
+<FilesMatch "^composer\.(json|lock)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block access to config files
+<FilesMatch "\.(conf|config|ini)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block access to log files
+<FilesMatch "\.log$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block access to backup files
+<FilesMatch "\.(bak|backup|old|tmp|swp)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Block access to git files
+<FilesMatch "^\.git">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ============================================
+# PHP SECURITY SETTINGS
+# ============================================
+
+<IfModule mod_php7.c>
+    # Disable dangerous PHP functions
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_flag expose_php Off
+    php_flag allow_url_fopen Off
+    php_flag allow_url_include Off
+    php_value session.cookie_httponly 1
+    php_value session.cookie_secure 1
+    php_value session.use_only_cookies 1
+    php_value session.use_strict_mode 1
+</IfModule>
+
+# ============================================
+# LIMIT REQUEST SIZE
+# ============================================
+
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 5M
+    php_value post_max_size 6M
+    php_value max_execution_time 30
+    php_value max_input_time 30
+    php_value memory_limit 128M
+</IfModule>
+
+# ============================================
+# PREVENT SQL INJECTION
+# ============================================
+
+<IfModule mod_rewrite.c>
+    RewriteCond %{QUERY_STRING} (union|select|insert|update|delete|drop|create|alter|exec|script|javascript|eval) [NC]
+    RewriteRule .* - [F,L]
+</IfModule>
+
+# ============================================
+# BLOCK BAD BOTS
+# ============================================
+
+<IfModule mod_rewrite.c>
+    RewriteCond %{HTTP_USER_AGENT} ^$ [OR]
+    RewriteCond %{HTTP_USER_AGENT} (bot|crawl|slurp|spider|scraper|curl|wget) [NC]
+    RewriteRule ^admin - [F,L]
+</IfModule>
+
+# ============================================
+# CORS SETTINGS (if needed)
+# ============================================
+
+<IfModule mod_headers.c>
+    # Uncomment and configure for specific origins
+    # Header set Access-Control-Allow-Origin "https://example.com"
+    # Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    # Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
+
+# ============================================
+# CACHING POLICY
+# ============================================
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Images
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    
+    # CSS and JavaScript
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    
+    # Fonts
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    ExpiresByType application/font-woff "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+    
+    # HTML - no cache
+    ExpiresByType text/html "access plus 0 seconds"
+</IfModule>
+
+# ============================================
+# GZIP COMPRESSION
+# ============================================
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/xml
+</IfModule>
+
+# ============================================
+# RATE LIMITING (if mod_evasive is available)
+# ============================================
+
+<IfModule mod_evasive20.c>
+    DOSHashTableSize 3097
+    DOSPageCount 5
+    DOSSiteCount 50
+    DOSPageInterval 1
+    DOSSiteInterval 1
+    DOSBlockingPeriod 10
+</IfModule>
